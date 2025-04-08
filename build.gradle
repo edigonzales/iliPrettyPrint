@@ -1,0 +1,32 @@
+plugins {
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+    maven { url "https://jars.interlis.ch" }
+}
+
+dependencies {
+    testImplementation libs.junit.jupiter
+
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    implementation libs.ili2c.core
+    implementation libs.ili2c.tool
+    implementation libs.ehibasics
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+application {
+    mainClass = 'ch.so.agi.iliformat.App'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
