@@ -5,6 +5,7 @@ plugins {
 repositories {
     mavenCentral()
     maven { url "https://jars.interlis.ch" }
+    flatDir { dirs 'lib' }
 }
 
 dependencies {
@@ -15,6 +16,15 @@ dependencies {
     implementation libs.ili2c.core
     implementation libs.ili2c.tool
     implementation libs.ehibasics
+    implementation libs.umleditor
+    
+    implementation 'javax.xml.bind:jaxb-api:2.3.0'
+    implementation 'com.sun.xml.bind:jaxb-core:2.3.0'
+    implementation 'com.sun.xml.bind:jaxb-impl:2.3.0'
+    
+    implementation name: 'sebase'
+    implementation name: 'jhotdraw53'
+    implementation name: 'XMIFramework'
 }
 
 java {

@@ -12,11 +12,20 @@ INTERLIS 2.3;
 !!@ shortDescription="Datenmodell für die (Teil-)Konfiguration der SEin-App"
 MODEL SO_ARP_SEin_Konfiguration_20250115 (de)
 AT "https://arp.so.ch"
-VERSION "2025-01-15"  =
-  IMPORTS GeometryCHLV95_V1,Text;
+VERSION "2025-01-15"  = IMPORTS 
 
-  CLASS Gemeinde (ABSTRACT) =
-    /** Name der Gemeinde (gemäss amtlichem Verzeichnis)
+
+GeometryCHLV95_V1,
+
+
+Text;
+
+                 CLASS Gemeinde (ABSTRACT) =
+    
+    
+    
+                              /** 
+                              Name der Gemeinde (gemäss amtlichem Verzeichnis)
      */
     Name : MANDATORY TEXT*500;
     /** Offizielle Gemeindenummer
