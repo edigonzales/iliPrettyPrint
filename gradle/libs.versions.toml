@@ -7,6 +7,7 @@ ili2c-core = "5.6.3"
 ili2c-tool = "5.6.3"
 ehibasics = "1.4.1"
 umleditor = "3.10.3"
+picocli = "4.7.6"
 
 [libraries]
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit-jupiter" }
@@ -14,3 +15,5 @@ ili2c-core = { module = "ch.interlis:ili2c-core", version.ref = "ili2c-core" }
 ili2c-tool = { module = "ch.interlis:ili2c-tool", version.ref = "ili2c-tool" }
 ehibasics = { module = "ch.ehi:ehibasics", version.ref = "ehibasics" }
 umleditor = { module = "ch.interlis:umleditor", version.ref = "umleditor" }
+picocli = { module = "info.picocli:picocli", version.ref = "picocli" }
+picocli-codegen = { module = "info.picocli:picocli-codegen", version.ref = "picocli" }

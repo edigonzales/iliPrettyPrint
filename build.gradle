@@ -25,6 +25,10 @@ dependencies {
     implementation name: 'sebase'
     implementation name: 'jhotdraw53'
     implementation name: 'XMIFramework'
+    
+    implementation libs.picocli
+    implementation libs.picocli.codegen
+    annotationProcessor libs.picocli.codegen
 }
 
 java {
