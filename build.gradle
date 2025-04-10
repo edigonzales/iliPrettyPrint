@@ -113,7 +113,8 @@ publishing {
     }
 }
 
-if (System.getProperty('release') != null) {
+//if (System.getProperty('release') != null) {
+if (true) {
     signing {
         sign publishing.publications.mavenJava
     }
