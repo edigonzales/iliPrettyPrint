@@ -1,4 +1,4 @@
-package ch.so.agi.iliformat;
+package ch.so.agi.pprint;
 
 /* This file is part of the UML/INTERLIS-Editor.
  * For more information, please see <http://www.umleditor.org/>.
@@ -82,7 +82,6 @@ import ch.ehi.umleditor.interlis.iliimport.TransferFromIli2cMetamodel;
 
 import java.io.*;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -124,6 +123,8 @@ public class TransferFromUmlMetamodel
   */
   private boolean useListBagOfPrimitives = false;
 
+  private Path outputDir = null;
+  
   class ModelElementEntry {
     public ModelElementEntry(int line,AbstractEditorElement def)
     {
@@ -173,6 +174,10 @@ public class TransferFromUmlMetamodel
    */
   transient private ModelElement lastModelElement=null;
 
+  public TransferFromUmlMetamodel(Path outputDir) {
+      this.outputDir = outputDir;
+  }
+  
   private void visitNamespace(Namespace ns,Configuration config,ch.ehi.basics.settings.Settings settings)
     throws java.io.IOException
     {
@@ -190,7 +195,7 @@ public class TransferFromUmlMetamodel
     while(!todo.isEmpty()){
       Namespace current=(Namespace)todo.get(0);
       if(current instanceof INTERLIS2Def){
-        visitINTERLIS2Def((INTERLIS2Def)current, Paths.get(""));
+        visitINTERLIS2Def((INTERLIS2Def)current);
       }else{
         // add child packages to end of todo list; so we walk the tree by level
         java.util.Iterator childi=current.iteratorOwnedElement();
@@ -275,7 +280,7 @@ public class TransferFromUmlMetamodel
     this.language=language;
     }
 
-  public void visitINTERLIS2Def(INTERLIS2Def def, Path outputDirectory)
+  public void visitINTERLIS2Def(INTERLIS2Def def)
         throws java.io.IOException
     {
     if(def.getDefLangName().startsWith("<")){
@@ -329,7 +334,7 @@ public class TransferFromUmlMetamodel
 //          if(parent!=null){
 //            file=new File(parent.getParent(),filename);
 //          }
-            file = outputDirectory.resolve(filename).toFile();            
+            file = outputDir.resolve(filename).toFile();
         }
         if(createFileList){
           fileList.add(file);
@@ -2662,8 +2667,8 @@ private void addSimpleEleCond(java.util.Set children,
         runIli2c=true;
         visitNamespace(ns,config,settings);
      }
-   public void writeIliFile(INTERLIS2Def ili, Path outputDirectory) throws java.io.IOException {
-        visitINTERLIS2Def(ili, outputDirectory);
+   public void writeIliFile(INTERLIS2Def ili) throws java.io.IOException {
+       visitINTERLIS2Def(ili);
     }
     public void writeIliFiles(Namespace ns)
       throws java.io.IOException

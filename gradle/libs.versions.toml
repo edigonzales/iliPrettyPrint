@@ -8,6 +8,7 @@ ili2c-tool = "5.6.3"
 ehibasics = "1.4.1"
 umleditor = "3.10.3"
 picocli = "4.7.6"
+jaxb = "2.3.0"
 
 [libraries]
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit-jupiter" }
@@ -17,3 +18,6 @@ ehibasics = { module = "ch.ehi:ehibasics", version.ref = "ehibasics" }
 umleditor = { module = "ch.interlis:umleditor", version.ref = "umleditor" }
 picocli = { module = "info.picocli:picocli", version.ref = "picocli" }
 picocli-codegen = { module = "info.picocli:picocli-codegen", version.ref = "picocli" }
+jaxb-api = { module = "javax.xml.bind:jaxb-api", version.ref = "jaxb" }
+jaxb-core = { module = "com.sun.xml.bind:jaxb-core", version.ref = "jaxb" }
+jaxb-impl = { module = "com.sun.xml.bind:jaxb-impl", version.ref = "jaxb" }

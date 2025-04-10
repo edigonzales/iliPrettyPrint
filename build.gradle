@@ -2,6 +2,13 @@ plugins {
     id 'application'
 }
 
+sourceCompatibility = 11
+targetCompatibility = 11
+
+compileJava {
+    options.compilerArgs.addAll(['--release', '11'])
+}
+
 repositories {
     mavenCentral()
     maven { url "https://jars.interlis.ch" }
@@ -16,11 +23,11 @@ dependencies {
     implementation libs.ili2c.core
     implementation libs.ili2c.tool
     implementation libs.ehibasics
-    implementation libs.umleditor
+    implementation libs.umleditor // Muss trotzdem lokal vorliegen: https://github.com/claeis/umleditor/issues/84
     
-    implementation 'javax.xml.bind:jaxb-api:2.3.0'
-    implementation 'com.sun.xml.bind:jaxb-core:2.3.0'
-    implementation 'com.sun.xml.bind:jaxb-impl:2.3.0'
+    implementation libs.jaxb.api
+    implementation libs.jaxb.core
+    implementation libs.jaxb.impl
     
     implementation name: 'sebase'
     implementation name: 'jhotdraw53'
@@ -33,14 +40,20 @@ dependencies {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(11)
     }
 }
 
 application {
-    mainClass = 'ch.so.agi.iliformat.App'
+    mainClass = 'ch.so.agi.pprint.App'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+run {
+    //args = ["--help"]
+    args = ["--ili", "src/test/data/SO_ARP_SEin_Konfiguration_20250115.ili", "--out", "/Users/stefan/tmp/"]
+}
+

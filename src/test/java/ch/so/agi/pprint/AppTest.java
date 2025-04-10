@@ -1,4 +1,4 @@
-package ch.so.agi.iliformat;
+package ch.so.agi.pprint;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
