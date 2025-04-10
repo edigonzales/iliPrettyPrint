@@ -77,8 +77,52 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
+
+            pom {
+                name = "iliprettyprint"
+                url = "https://github.com/edigonzales/iliPrettyPrint"
+                description = "INTERLIS pretty printer"
+                scm {
+                    connection = "scm:git:https@github.com/edigonzales/iliPrettyPrint"
+                    developerConnection = "scm:git:https@github.com/edigonzales/iliPrettyPrint"
+                    url = "https://github.com/edigonzales/iliPrettyPrint"
+                }
+                licenses {
+                    license {
+                        name = "MIT"
+                        url = "https://github.com/edigonzales/iliPrettyPrint/blob/master/LICENSE"
+                    }
+                }
+                developers {
+                    developer {
+                        id = "edigonzales"
+                        name = "Stefan Ziegler"
+                    }
+                }
+            }
+        }
+    }
+}
+
 if (System.getProperty('release') != null) {
     signing {
         sign publishing.publications.mavenJava
+    }
+}
+
+nexusPublishing {
+    repositories {
+        sonatype { 
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+            username = findProperty("ossrhUsername") ?: System.getenv("OSSRH_USERNAME")
+            password = findProperty("ossrhPassword") ?: System.getenv("OSSRH_PASSWORD")
+        }
     }
 }
