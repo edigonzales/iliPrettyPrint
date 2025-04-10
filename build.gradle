@@ -5,6 +5,7 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '8.1.1'
     id 'signing'
     id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
+    id 'org.jreleaser' version '1.17.0'
 }
 
 apply from: "$rootDir/gradle/versioning.gradle"
@@ -127,6 +128,41 @@ nexusPublishing {
             snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
             username = findProperty("ossrhUsername") ?: System.getenv("OSSRH_USERNAME")
             password = findProperty("ossrhPassword") ?: System.getenv("OSSRH_PASSWORD")
+        }
+    }
+}
+
+jreleaser {
+    gitRootSearch = true
+    
+    project {
+        name = "iliprettyprint"
+        description = 'INTERLIS pretty printer'
+        website = 'https://agi.so.ch'
+        authors = ['edigonzales']
+        license = 'MIT'
+        docsUrl = 'https://github.com/edigonzales/iliPrettyPrint'
+        copyright = '2025 Stefan Ziegler'
+    }
+    release {
+        github {
+            repoOwner = 'edigonzales'
+            overwrite = true
+            apiEndpoint = 'https://api.github.com'
+        }
+    }
+    distributions {
+        appJvm {
+            distributionType = 'SINGLE_JAR'
+            stereotype = 'CLI'
+            artifact {
+                path = "build/libs/iliprettyprint-${version}-all.jar"
+            }
+            java {
+                groupId = 'io.github.sogis'
+                artifactId = "iliprettyprint"
+                version = '11'
+            }
         }
     }
 }
