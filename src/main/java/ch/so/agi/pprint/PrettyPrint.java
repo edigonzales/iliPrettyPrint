@@ -47,7 +47,9 @@ public class PrettyPrint {
 
             TransferToXml transferToXml =  new TransferToXml();
             try {
+                System.out.println("vorher");
                 transferToXml.export(model, new File("/Users/stefan/tmp/foo.xml"));
+                System.out.println("nachher");
             } catch (Exception e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
