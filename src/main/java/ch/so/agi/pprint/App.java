@@ -24,14 +24,6 @@ public class App implements Callable<Integer> {
 
     @Option(names = "--modeldir", description = "List of directories/repositories", paramLabel = "<modeldir>", required = false)
     private String modeldir;
-
-//    public static void main(String[] args) {
-//        System.out.println("Hallo Welt.");
-//        
-//        ImportInterlis.readIliFile(new File[] {new File("src/test/data/SO_ARP_SEin_Konfiguration_20250115.ili")});
-//        
-//        
-//    }
     
     @Override
     public Integer call() {
