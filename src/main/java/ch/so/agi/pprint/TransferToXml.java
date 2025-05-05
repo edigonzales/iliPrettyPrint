@@ -32,6 +32,7 @@ import ch.ehi.uml1_4.foundation.core.Constraint;
 import ch.ehi.uml1_4.foundation.core.ModelElement;
 import ch.ehi.uml1_4.foundation.core.Namespace;
 import ch.ehi.uml1_4.foundation.extensionmechanisms.TaggedValue;
+import ch.ehi.uml1_4.implementation.UmlMultiplicityRange;
 import ch.ehi.uml1_4.modelmanagement.Model;
 import ch.interlis.ili2c.generator.nls.ElementType;
 import ch.interlis.ili2c.generator.nls.Ili2TranslationXml;
@@ -175,6 +176,8 @@ public class TransferToXml {
             if (modelDef instanceof AssociationDef) {
                 System.out.println("*******************************");
                 System.out.println("AssociationDef: " + modelDef.getDefLangName());
+                System.out.println("AssociationDef: " + modelDef.getName());
+                System.out.println("AssociationDef: " + modelDef.sizeTargetFlow());
                 System.out.println("*******************************");                
                 Iterator assoDefI = ((AssociationDef) modelDef).iteratorConnection();
                 while (assoDefI.hasNext()) {
@@ -191,6 +194,15 @@ public class TransferToXml {
                     System.out.println("getAssociation().getDefLangName: " + roleDef.getAssociation().getDefLangName());
                     System.out.println("getAssociation().getName: " + roleDef.getAssociation().getName());
                     System.out.println("getAssociation().getClass: " + roleDef.getAssociation().getClass());
+                    
+                    
+                    Iterator it = roleDef.getMultiplicity().iteratorRange();
+                    while(it.hasNext()) {
+                        UmlMultiplicityRange mrange = (UmlMultiplicityRange) it.next();
+                        System.out.println(mrange.getLower());
+                        System.out.println(mrange.getUpper());
+                    }
+                    
                     System.out.println("-----------------------------");
 
 //                    roleDef.getAssociation().iter
