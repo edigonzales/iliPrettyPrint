@@ -173,10 +173,28 @@ public class TransferToXml {
             }
             
             if (modelDef instanceof AssociationDef) {
+                System.out.println("*******************************");
+                System.out.println("AssociationDef: " + modelDef.getDefLangName());
+                System.out.println("*******************************");                
                 Iterator assoDefI = ((AssociationDef) modelDef).iteratorConnection();
                 while (assoDefI.hasNext()) {
+                    System.out.println("-----------------------------");
                     RoleDef roleDef = (RoleDef) assoDefI.next();
                     System.out.println("roleDef: " + roleDef);
+                    System.out.println("getAssociation: " + roleDef.getAssociation());
+                    System.out.println("getAggregation: " + roleDef.getAggregation());
+                    System.out.println("getMultiplicity().sizeRange: " + roleDef.getMultiplicity().sizeRange());
+                    System.out.println("getName: " + roleDef.getName());
+                    System.out.println("getParticipant: " + roleDef.getParticipant());
+//                    System.out.println("roleDef: " + roleDef.getRoleDefDerived());
+                    System.out.println("sizeTargetFlow: " + roleDef.sizeTargetFlow());
+                    System.out.println("getAssociation().getDefLangName: " + roleDef.getAssociation().getDefLangName());
+                    System.out.println("getAssociation().getName: " + roleDef.getAssociation().getName());
+                    System.out.println("getAssociation().getClass: " + roleDef.getAssociation().getClass());
+                    System.out.println("-----------------------------");
+
+//                    roleDef.getAssociation().iter
+                    
                     
                     visitModelElement(modelElements,roleDef, scopedNamePrefix, baselanguage, languages, false);
                 }
