@@ -73,6 +73,16 @@ public class TransferToXml {
                 }
             }
         }
+        
+
+        Iterator<TranslationElement> it = modelElements.iterator();
+        while(it.hasNext()) {
+            TranslationElement ele = it.next();
+            System.out.println(ele.getElementType());
+            System.out.println(ele.getScopedName());
+            System.out.println(ele.getName_de());
+        }
+        
         modelElements.sort();
         Ili2TranslationXml.writeModelElementsAsXML(modelElements, xmlfile);
     }

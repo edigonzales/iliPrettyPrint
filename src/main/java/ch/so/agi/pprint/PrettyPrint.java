@@ -45,10 +45,10 @@ public class PrettyPrint {
             TransferFromIli2cMetamodel convert = new TransferFromIli2cMetamodel();
             convert.visitTransferDescription(model, ili2cModel, null, config);
 
-            TransferToXml transferToXml =  new TransferToXml();
+            TransferToPlantUml transferToPlantUml =  new TransferToPlantUml();
             try {
                 System.out.println("vorher");
-                transferToXml.export(model, new File("/Users/stefan/tmp/foo.xml"));
+                transferToPlantUml.export(model, new File("/Users/stefan/tmp/foo.puml"));
                 System.out.println("nachher");
             } catch (Exception e) {
                 // TODO Auto-generated catch block
