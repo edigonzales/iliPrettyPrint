@@ -74,7 +74,8 @@ public class TransferToPlantUml {
                     System.out.println("Processing INTERLIS2Def: " + obj.toString());
                     processModelElement((INTERLIS2Def) obj);
                 } else {
-                    System.out.println("Processing namespace: " + obj.toString());
+                    // ch.ehi.uml1_4.implementation.UmlPackage
+                    System.out.println("Processing was anderes: " + obj.toString());
                     Iterator i = ch.ehi.interlis.tools.ModelElementUtility.getChildElements((Namespace) obj, null)
                             .iterator();
                     while (i.hasNext()) {
@@ -98,6 +99,7 @@ public class TransferToPlantUml {
     }
     
     private void processModelElement(INTERLIS2Def obj) {
+        // Entspricht more or less den importieren Modellen oder die mit "<>"?
         if (!ModelElementUtility.isInternal(obj)) {
             String baselanguage = findBaseLanguage(obj);
             Set<String> languages = findLanguages(obj);
@@ -156,112 +158,263 @@ public class TransferToPlantUml {
         System.out.println("fullScopedName: " + fullScopedName);
         
         // Store class name for later relationship building
-//        if (elementType != null && (elementType.equals(ElementType.CLASS) || 
-//                                     elementType.equals(ElementType.STRUCTURE))) {
-//            classNameMap.put(fullScopedName, elementName);
+        if (elementType != null && (elementType.equals(ElementType.CLASS) || 
+                                     elementType.equals(ElementType.STRUCTURE))) {
+            classNameMap.put(fullScopedName, elementName);
+        }
+        
+        // Process according to element type
+        if (elementType != null) {
+            switch (elementType) {
+                case ElementType.MODEL:
+                    writer.println("package \"" + elementName + "\" {");
+                    break;
+                    
+                case ElementType.TOPIC:
+                    writer.println("package \"" + elementName + "\" {");
+                    break;
+                    
+                case ElementType.CLASS:
+                case ElementType.STRUCTURE:
+                    
+                    // TODO: es gäbe noch "struct" in PlanUML
+                    String stereotype = elementType.equals(ElementType.STRUCTURE) ? "<<structure>>" : "";
+//                    break;
+                    // Handle inheritance
+                    // TODO: Ist glaub sowieso immer auch für Structure eine ClassDef.
+                    if (modelDef instanceof ClassDef) {
+                        ClassDef classDef = (ClassDef) modelDef;
+                        
+                        String abstractString = "";
+                        if (classDef.isAbstract()) {
+                            abstractString = "abstract ";
+                        }
+                        writer.println(abstractString + "class \"" + elementName + "\" " + stereotype + " {");
+
+                        handleInheritance(classDef, baselanguage);
+                    }
+                    break;
+                    
+                case ElementType.ASSOCIATION:
+                    // Associations are handled separately when processing roles
+                    break;
+                    
+                default:
+                    // Other element types not directly represented in class diagram
+                    break;
+            }
+        }
+        
+        // Process children
+        if (modelDef instanceof AbstractClassDef) {
+            // Process attributes
+            Iterator attributeIt = AbstractClassDefUtility.getIliAttributes((AbstractClassDef) modelDef).iterator();
+            while (attributeIt.hasNext()) {
+                Object object = attributeIt.next();
+                if (object instanceof AttributeDef) {
+                    AttributeDef attrDef = (AttributeDef) object;
+                    String attrName = attrDef.getName().getValue(baselanguage);
+                    String attrType = getAttributeType(attrDef);
+                    
+                    writer.println("  " + attrName + " : " + attrType);
+                    
+                    // Process enum attributes if needed
+                    if (attrDef.containsAttrType()) {
+                        DomainAttribute domainAttr = (DomainAttribute) attrDef.getAttrType();
+                        if (domainAttr.containsDirect() && domainAttr.getDirect() instanceof Enumeration) {
+                            Enumeration enumeration = (Enumeration) domainAttr.getDirect();
+                            // If needed, process enum values
+                        }
+                    }
+                }
+            }
+            
+            // Process parameters if class definition
+            if (modelDef instanceof ClassDef) {
+                ClassDef classDef = (ClassDef) modelDef;
+                Iterator paramIt = classDef.iteratorParameterDef();
+                while (paramIt.hasNext()) {
+                    ParameterDef param = (ParameterDef) paramIt.next();
+                    // Handle parameters if needed
+                }
+            }
+            
+            // Process associations
+            if (modelDef instanceof AssociationDef) {
+                AssociationDef assocDef = (AssociationDef) modelDef;
+                
+                // Skip if already processed
+                if (processedAssociations.contains(fullScopedName)) {
+                    return;
+                }
+                processedAssociations.add(fullScopedName);
+                
+                // Process roles and create relationship
+                processAssociation(assocDef, baselanguage);
+            }
+            
+        } else if (modelDef instanceof Namespace) {
+            // Process children elements
+            Iterator childIt = ch.ehi.interlis.tools.ModelElementUtility.getChildElements((Namespace) modelDef, null)
+                    .iterator();
+
+            while (childIt.hasNext()) {
+                ModelElement childElement = (ModelElement) childIt.next();
+                visitModelElement(childElement, fullScopedName, baselanguage, languages);
+            }
+            
+        }
+        
+        // Close any opened blocks
+        if (elementType != null) {
+            switch (elementType) {
+                case ElementType.MODEL:
+                case ElementType.TOPIC:
+                case ElementType.CLASS:
+                case ElementType.STRUCTURE:
+                    writer.println("}");
+                    writer.println();
+                    break;
+            }
+        }
+    }
+    
+    /**
+     * Handles inheritance relationships for a class
+     */
+    private void handleInheritance(ClassDef classDef, String baselanguage) {
+        
+        System.out.println(classDef.getDefLangName() + "    "  + classDef.iteratorSpecialization().hasNext());
+        System.out.println(classDef.getDefLangName() + "    "  + classDef.iteratorGeneralization().hasNext());
+        
+//        // Skip if no inheritance
+//        if (!classDef.containsBaseClass()) {
+//            return;
 //        }
 //        
-//        // Process according to element type
-//        if (elementType != null) {
-//            switch (elementType) {
-//                case ElementType.MODEL:
-//                    writer.println("package \"" + elementName + "\" {");
-//                    break;
-//                    
-//                case ElementType.TOPIC:
-//                    writer.println("package \"" + elementName + "\" {");
-//                    break;
-//                    
-//                case ElementType.CLASS:
-//                case ElementType.STRUCTURE:
-//                    String stereotype = elementType.equals(ElementType.STRUCTURE) ? "<<structure>>" : "";
-//                    writer.println("class \"" + elementName + "\" " + stereotype + " {");
-//                    break;
-//                    
-//                case ElementType.ASSOCIATION:
-//                    // Associations are handled separately when processing roles
-//                    break;
-//                    
-//                default:
-//                    // Other element types not directly represented in class diagram
-//                    break;
-//            }
+//        AbstractClassDef baseClass = classDef.getBaseClass();
+//        if (baseClass == null) {
+//            return;
 //        }
 //        
-//        // Process children
-//        if (modelDef instanceof AbstractClassDef) {
-//            // Process attributes
-//            Iterator attributeIt = AbstractClassDefUtility.getIliAttributes((AbstractClassDef) modelDef).iterator();
-//            while (attributeIt.hasNext()) {
-//                Object object = attributeIt.next();
-//                if (object instanceof AttributeDef) {
-//                    AttributeDef attrDef = (AttributeDef) object;
-//                    String attrName = attrDef.getName().getValue(baselanguage);
-//                    String attrType = getAttributeType(attrDef);
-//                    
-//                    writer.println("  " + attrName + " : " + attrType);
-//                    
-//                    // Process enum attributes if needed
-//                    if (attrDef.containsAttrType()) {
-//                        DomainAttribute attrType = (DomainAttribute) attrDef.getAttrType();
-//                        if (attrType.containsDirect() && attrType.getDirect() instanceof Enumeration) {
-//                            Enumeration enumeration = (Enumeration) attrType.getDirect();
-//                            // If needed, process enum values
-//                        }
-//                    }
-//                }
-//            }
-//            
-//            // Process parameters if class definition
-//            if (modelDef instanceof ClassDef) {
-//                ClassDef classDef = (ClassDef) modelDef;
-//                Iterator paramIt = classDef.iteratorParameterDef();
-//                while (paramIt.hasNext()) {
-//                    ParameterDef param = (ParameterDef) paramIt.next();
-//                    // Handle parameters if needed
-//                }
-//            }
-//            
-//            // Process associations
-//            if (modelDef instanceof AssociationDef) {
-//                AssociationDef assocDef = (AssociationDef) modelDef;
-//                
-//                // Skip if already processed
-//                if (processedAssociations.contains(fullScopedName)) {
-//                    return;
-//                }
-//                processedAssociations.add(fullScopedName);
-//                
-//                // Process roles and create relationship
-//                processAssociation(assocDef, baselanguage);
-//            }
-//            
-//        } else if (modelDef instanceof Namespace) {
-//            // Process children elements
-//            Iterator childIt = ch.ehi.interlis.tools.ModelElementUtility.getChildElements((Namespace) modelDef, null)
-//                    .iterator();
-//
-//            while (childIt.hasNext()) {
-//                ModelElement childElement = (ModelElement) childIt.next();
-//                visitModelElement(childElement, fullScopedName, baselanguage, languages);
-//            }
-//            
-//        }
+//        String childClassName = classDef.getName().getValue(baselanguage);
+//        String parentClassName = baseClass.getName().getValue(baselanguage);
 //        
-//        // Close any opened blocks
-//        if (elementType != null) {
-//            switch (elementType) {
-//                case ElementType.MODEL:
-//                case ElementType.TOPIC:
-//                case ElementType.CLASS:
-//                case ElementType.STRUCTURE:
-//                    writer.println("}");
-//                    writer.println();
-//                    break;
-//            }
+//        // Create unique inheritance identifier to avoid duplicates
+//        String inheritanceKey = parentClassName + "->" + childClassName;
+//        if (processedInheritance.contains(inheritanceKey)) {
+//            return;
 //        }
+//        processedInheritance.add(inheritanceKey);
+//        
+//        // Write inheritance relationship to PlantUML
+//        writer.println("\"" + parentClassName + "\" <|-- \"" + childClassName + "\"");
+    }
+    
+    private void processAssociation(AssociationDef assocDef, String baselanguage) {
+        // Process roles in the association
+        String assocName = assocDef.getName() != null ? assocDef.getName().getValue(baselanguage) : "";
+        
+        StringBuilder relationBuilder = new StringBuilder();
+        String leftClass = null;
+        String rightClass = null;
+        String leftCard = null;
+        String rightCard = null;
+        String leftRole = null;
+        String rightRole = null;
+        
+        Iterator roleIt = assocDef.iteratorConnection();
+        int roleCount = 0;
+        
+        while (roleIt.hasNext() && roleCount < 2) {
+            RoleDef roleDef = (RoleDef) roleIt.next();
+            
+            String roleName = roleDef.getName() != null ? roleDef.getName().getValue(baselanguage) : "";
+            String className = roleDef.getParticipant() != null ? 
+                               roleDef.getParticipant().getName().getValue(baselanguage) : "UnknownClass";
+            
+            // Get cardinality
+            String cardinality = "";
+            Iterator rangeIt = roleDef.getMultiplicity().iteratorRange();
+            if (rangeIt.hasNext()) {
+                UmlMultiplicityRange range = (UmlMultiplicityRange) rangeIt.next();
+                if (range.getLower() == range.getUpper()) {
+                    cardinality = Long.toString(range.getLower());
+                } else {
+                    cardinality = range.getLower() + ".." + (range.getUpper() == Long.MAX_VALUE ? "*" : range.getUpper());   
+                }                
+            }
+            
+            if (roleCount == 0) {
+                leftClass = className;
+                leftCard = cardinality;
+                leftRole = roleName;
+            } else {
+                rightClass = className;
+                rightCard = cardinality;
+                rightRole = roleName;
+            }
+            
+            roleCount++;
+        }
+        
+        // Create PlantUML relationship notation if we have two roles
+        if (leftClass != null && rightClass != null) {
+            relationBuilder.append("\"").append(leftClass).append("\"");
+            
+            if (leftCard != null && !leftCard.isEmpty()) {
+                relationBuilder.append(" \"").append(leftCard).append("\" ");
+            } else {
+                relationBuilder.append(" ");
+            }
+            
+            // Basic association
+            relationBuilder.append("--");
+            
+            if (rightCard != null && !rightCard.isEmpty()) {
+                relationBuilder.append(" \"").append(rightCard).append("\" ");
+            } else {
+                relationBuilder.append(" ");
+            }
+            
+            relationBuilder.append("\"").append(rightClass).append("\"");
+            
+            // Add roles and association name if present
+            if ((leftRole != null && !leftRole.isEmpty()) || (rightRole != null && !rightRole.isEmpty())) {
+                relationBuilder.append(" : ");
+                
+                if (leftRole != null && !leftRole.isEmpty()) {
+                    relationBuilder.append(leftRole).append(" ");
+                }
+                
+                if (assocName != null && !assocName.isEmpty()) {
+                    relationBuilder.append("(").append(assocName).append(") ");
+                }
+                
+                if (rightRole != null && !rightRole.isEmpty()) {
+                    relationBuilder.append(rightRole);
+                }
+            }
+            
+            writer.println(relationBuilder.toString());
+            writer.println();
+        }
     }
 
+    private String getAttributeType(AttributeDef attrDef) {
+        if (attrDef.containsAttrType()) {
+            DomainAttribute attr = (DomainAttribute) attrDef.getAttrType();
+            if (attr.containsDomainDef()) {
+                return attr.getDomainDef().getDefLangName();
+            } else if (attr.containsDirect()) {
+                Type type = attr.getDirect();
+                // Return a string representation of the type
+                return type.getClass().getSimpleName().replace("Def", "");
+            }
+        }
+        return "Object";
+    }
+    
     /**
      * Concatenates the scoped name of the given Model Element
      */
