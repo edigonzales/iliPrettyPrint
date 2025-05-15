@@ -24,7 +24,11 @@ GeometryCHLV95_V1,
 
 Text;
 
-                 CLASS Gemeinde (ABSTRACT) =
+CLASS MyBase (ABSTRACT) =
+  aId : TEXT*10;
+END MyBase;
+
+                 CLASS Gemeinde (ABSTRACT) EXTENDS MyBase =
     
     
     

@@ -26,6 +26,7 @@ import ch.ehi.interlis.metaobjects.ParameterDef;
 import ch.ehi.interlis.modeltopicclass.AbstractClassDef;
 import ch.ehi.interlis.modeltopicclass.ClassDef;
 import ch.ehi.interlis.modeltopicclass.ClassDefKind;
+import ch.ehi.interlis.modeltopicclass.ClassExtends;
 import ch.ehi.interlis.modeltopicclass.INTERLIS2Def;
 import ch.ehi.interlis.modeltopicclass.ModelDef;
 import ch.ehi.interlis.modeltopicclass.TopicDef;
@@ -174,27 +175,17 @@ public class TransferToPlantUml {
                     writer.println("package \"" + elementName + "\" {");
                     break;
                     
-                case ElementType.CLASS:
                 case ElementType.STRUCTURE:
-                    
-                    // TODO: es gäbe noch "struct" in PlanUML
-                    String stereotype = elementType.equals(ElementType.STRUCTURE) ? "<<structure>>" : "";
-//                    break;
-                    // Handle inheritance
-                    // TODO: Ist glaub sowieso immer auch für Structure eine ClassDef.
-                    if (modelDef instanceof ClassDef) {
-                        ClassDef classDef = (ClassDef) modelDef;
-                        
-                        String abstractString = "";
-                        if (classDef.isAbstract()) {
-                            abstractString = "abstract ";
-                        }
-                        writer.println(abstractString + "class \"" + elementName + "\" " + stereotype + " {");
+                case ElementType.CLASS:                                  
+                    String type = elementType.equals(ElementType.STRUCTURE) ? "struct" : "class";
+                    ClassDef classDef = (ClassDef) modelDef;
+                    writer.println((classDef.isAbstract() ? "abstract " : "") + type +" \"" + elementName + "\" {");
 
-                        handleInheritance(classDef, baselanguage);
-                    }
+                    // Handle inheritance
+                    handleInheritance(classDef, baselanguage);
+
                     break;
-                    
+                       
                 case ElementType.ASSOCIATION:
                     // Associations are handled separately when processing roles
                     break;
@@ -260,6 +251,7 @@ public class TransferToPlantUml {
 
             while (childIt.hasNext()) {
                 ModelElement childElement = (ModelElement) childIt.next();
+                //System.out.println(childElement.getDefLangName());
                 visitModelElement(childElement, fullScopedName, baselanguage, languages);
             }
             
@@ -284,13 +276,34 @@ public class TransferToPlantUml {
      */
     private void handleInheritance(ClassDef classDef, String baselanguage) {
         
-        System.out.println(classDef.getDefLangName() + "    "  + classDef.iteratorSpecialization().hasNext());
-        System.out.println(classDef.getDefLangName() + "    "  + classDef.iteratorGeneralization().hasNext());
+//        System.out.println(classDef.getDefLangName() + "    "  + classDef.iteratorSpecialization().hasNext());
+//        System.out.println(classDef.getDefLangName() + "    "  + classDef.iteratorGeneralization().hasNext());
         
-//        // Skip if no inheritance
-//        if (!classDef.containsBaseClass()) {
-//            return;
+        // Skip if no inheritance
+        if (!classDef.iteratorGeneralization().hasNext()) {
+            System.out.println("keine basisklasse für diese klasse");
+            return;
+        }
+        
+        Iterator geni = classDef.iteratorGeneralization();
+        while (geni.hasNext()) {
+            ClassExtends classExtends = (ClassExtends) geni.next();
+            System.out.println(classExtends.getParent().getName().getValue());
+        }
+        
+        // Braucht es nicht irgendwie full scoped name?
+        // Meherer Vererbungen?
+        
+//        java.util.Iterator geni=currentClass.iteratorGeneralization();
+//        currentClass=null;
+//        if(geni.hasNext()){
+//          Generalization gen=(Generalization)geni.next();
+//          currentClass=(AbstractClassDef)gen.getParent();
 //        }
+//      }
+
+        
+        
 //        
 //        AbstractClassDef baseClass = classDef.getBaseClass();
 //        if (baseClass == null) {
