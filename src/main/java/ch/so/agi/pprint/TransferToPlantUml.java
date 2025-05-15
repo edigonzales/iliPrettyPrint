@@ -288,7 +288,9 @@ public class TransferToPlantUml {
         Iterator geni = classDef.iteratorGeneralization();
         while (geni.hasNext()) {
             ClassExtends classExtends = (ClassExtends) geni.next();
-            System.out.println(classExtends.getParent().getName().getValue());
+            
+            System.out.println("aktuelle Klasse: " + classDef.getDefLangName() + " -- parent Klasse: " + classExtends.getParent().getName().getValue());
+            
         }
         
         // Braucht es nicht irgendwie full scoped name?
