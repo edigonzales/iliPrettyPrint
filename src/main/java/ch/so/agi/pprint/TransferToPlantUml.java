@@ -3,9 +3,11 @@ package ch.so.agi.pprint;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -46,7 +48,15 @@ public class TransferToPlantUml {
     private PrintWriter writer;
     private Map<String, String> classNameMap = new HashMap<>();
     private Set<String> processedAssociations = new HashSet<>();
+    private List<String> inheritanceList = new ArrayList<>();
 
+    // TODO
+    // - Vererbungen
+    // - Beziehungen
+    // - Attributtype (Strukturen, Numeric)
+    // - Attributmultiplizität
+    
+    
     /**
      * Exports a model to a PlantUML file
      * 
@@ -63,8 +73,8 @@ public class TransferToPlantUml {
             writer.println("' INTERLIS model diagram");
             writer.println("skinparam packageStyle rectangle");
             writer.println("skinparam classAttributeIconSize 0");
-            writer.println("skinparam monochrome true");
-            writer.println("skinparam shadowing false");
+            writer.println("skinparam monochrome false");
+            writer.println("skinparam shadowing true");
             writer.println();
             
             // Process model elements
@@ -106,14 +116,26 @@ public class TransferToPlantUml {
             Set<String> languages = findLanguages(obj);
             
             // Process all child elements
-            Iterator i = ch.ehi.interlis.tools.ModelElementUtility.getChildElements((Namespace) obj, null)
-                    .iterator();
+            Set<ModelElement> childElements = ch.ehi.interlis.tools.ModelElementUtility.getChildElements((Namespace) obj, null);
+            Iterator<ModelElement> i = childElements.iterator();
             
+//            // First pass: get classes to handle inheritance
+//            System.out.println("first pass...");
+//            while (i.hasNext()) {
+//                ModelElement modelElement = i.next();
+//                visitClassElement(modelElement, null, baselanguage, languages);
+//            }
+            
+            // Second pass: print the actual puml file
+//            System.out.println("second pass...");
+//            i = childElements.iterator();
             while (i.hasNext()) {
-                ModelElement modelElement = (ModelElement) i.next();
+                ModelElement modelElement = i.next();
                 System.out.println("modelElement: " + modelElement.getName());
                 visitModelElement(modelElement, null, baselanguage, languages);
             }
+            
+             
         }
     }
     
@@ -147,6 +169,42 @@ public class TransferToPlantUml {
         return languages;
     }
     
+//    /**
+//     * Process class and structure elements and store necessary information to handle e.g. inheritance correctly.
+//     * We need to be able to identify a puml object, thus we need a unique name of a puml object (= full scoped name).
+//     */
+//    private void visitClassElement(ModelElement modelDef, String scopedNamePrefix, String baselanguage, Set languages) {
+//        String elementType = getElementType(modelDef);
+//        String elementName = modelDef.getName() != null ? modelDef.getName().getValue(baselanguage) : "Unnamed";
+//
+//        String fullScopedName = getScopedName(scopedNamePrefix, modelDef, baselanguage);
+//
+//        if (elementType != null) {
+//            switch (elementType) {
+//                case ElementType.CLASS:
+//                case ElementType.STRUCTURE:
+//                    System.out.println(fullScopedName);
+//                    ClassDef classDef = (ClassDef) modelDef;
+////                    System.out.println(classDef.getOid());
+////                    System.out.println(classDef.hashCode());
+//                    
+//                default:
+//                    break;
+//            }
+//        }
+//        
+//        if (modelDef instanceof Namespace) {
+//            Iterator<ModelElement> childIt = ch.ehi.interlis.tools.ModelElementUtility.getChildElements((Namespace) modelDef, null)
+//                    .iterator();
+//            while (childIt.hasNext()) {
+//                ModelElement childElement = (ModelElement) childIt.next();
+//                visitClassElement(childElement, fullScopedName, baselanguage, languages);
+//            }   
+//        }
+//    }
+    
+    
+    
     /**
      * Processes a model element and generates PlantUML representation
      */
@@ -179,7 +237,8 @@ public class TransferToPlantUml {
                 case ElementType.CLASS:                                  
                     String type = elementType.equals(ElementType.STRUCTURE) ? "struct" : "class";
                     ClassDef classDef = (ClassDef) modelDef;
-                    writer.println((classDef.isAbstract() ? "abstract " : "") + type +" \"" + elementName + "\" {");
+                    String oid = classDef.getOid();
+                    writer.println((classDef.isAbstract() ? "abstract " : "") + type +" \"" + elementName + "\" as c"+oid+" {");
 
                     // Handle inheritance
                     handleInheritance(classDef, baselanguage);
@@ -241,7 +300,7 @@ public class TransferToPlantUml {
                 processedAssociations.add(fullScopedName);
                 
                 // Process roles and create relationship
-                processAssociation(assocDef, baselanguage);
+                //processAssociation(assocDef, baselanguage);
             }
             
         } else if (modelDef instanceof Namespace) {
@@ -264,6 +323,11 @@ public class TransferToPlantUml {
                 case ElementType.TOPIC:
                 case ElementType.CLASS:
                 case ElementType.STRUCTURE:
+                    if (elementType.equals(ElementType.MODEL)) {
+                        for (String inheritance : inheritanceList) {
+                            writer.println(inheritance);
+                        }
+                    }
                     writer.println("}");
                     writer.println();
                     break;
@@ -275,55 +339,21 @@ public class TransferToPlantUml {
      * Handles inheritance relationships for a class
      */
     private void handleInheritance(ClassDef classDef, String baselanguage) {
-        
-//        System.out.println(classDef.getDefLangName() + "    "  + classDef.iteratorSpecialization().hasNext());
-//        System.out.println(classDef.getDefLangName() + "    "  + classDef.iteratorGeneralization().hasNext());
-        
-        // Skip if no inheritance
         if (!classDef.iteratorGeneralization().hasNext()) {
-            System.out.println("keine basisklasse für diese klasse");
             return;
         }
+        
+        String childClassOid = classDef.getOid();
+        String parentClassOid = "";
         
         Iterator geni = classDef.iteratorGeneralization();
         while (geni.hasNext()) {
             ClassExtends classExtends = (ClassExtends) geni.next();
-            
-            System.out.println("aktuelle Klasse: " + classDef.getDefLangName() + " -- parent Klasse: " + classExtends.getParent().getName().getValue());
+            parentClassOid = ((ClassDef)classExtends.getParent()).getOid();
             
         }
-        
-        // Braucht es nicht irgendwie full scoped name?
-        // Meherer Vererbungen?
-        
-//        java.util.Iterator geni=currentClass.iteratorGeneralization();
-//        currentClass=null;
-//        if(geni.hasNext()){
-//          Generalization gen=(Generalization)geni.next();
-//          currentClass=(AbstractClassDef)gen.getParent();
-//        }
-//      }
-
-        
-        
-//        
-//        AbstractClassDef baseClass = classDef.getBaseClass();
-//        if (baseClass == null) {
-//            return;
-//        }
-//        
-//        String childClassName = classDef.getName().getValue(baselanguage);
-//        String parentClassName = baseClass.getName().getValue(baselanguage);
-//        
-//        // Create unique inheritance identifier to avoid duplicates
-//        String inheritanceKey = parentClassName + "->" + childClassName;
-//        if (processedInheritance.contains(inheritanceKey)) {
-//            return;
-//        }
-//        processedInheritance.add(inheritanceKey);
-//        
-//        // Write inheritance relationship to PlantUML
-//        writer.println("\"" + parentClassName + "\" <|-- \"" + childClassName + "\"");
+                        
+        inheritanceList.add("c" + parentClassOid + " <|-- c" + childClassOid);
     }
     
     private void processAssociation(AssociationDef assocDef, String baselanguage) {
@@ -417,12 +447,21 @@ public class TransferToPlantUml {
     }
 
     private String getAttributeType(AttributeDef attrDef) {
+        
+        System.out.println(attrDef.getDefLangName());
+        System.out.println(attrDef.getAttrType().getAttributeDef().getDefLangName());
+        
+        
         if (attrDef.containsAttrType()) {
-            DomainAttribute attr = (DomainAttribute) attrDef.getAttrType();
+            DomainAttribute attr = (DomainAttribute) attrDef.getAttrType();            
             if (attr.containsDomainDef()) {
+                System.out.println("containsDomainDef");
                 return attr.getDomainDef().getDefLangName();
             } else if (attr.containsDirect()) {
+                System.out.println("direct");
+                System.out.println(attr.getClass());
                 Type type = attr.getDirect();
+                //System.out.println(type);
                 // Return a string representation of the type
                 return type.getClass().getSimpleName().replace("Def", "");
             }
