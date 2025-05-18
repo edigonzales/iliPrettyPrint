@@ -1,5 +1,6 @@
 package ch.so.agi.pprint;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -18,8 +19,13 @@ import ch.ehi.interlis.attributes.DomainAttribute;
 import ch.ehi.interlis.constraints.ConstraintDef;
 import ch.ehi.interlis.domainsandconstants.DomainDef;
 import ch.ehi.interlis.domainsandconstants.Type;
+import ch.ehi.interlis.domainsandconstants.basetypes.BooleanType;
 import ch.ehi.interlis.domainsandconstants.basetypes.EnumElement;
 import ch.ehi.interlis.domainsandconstants.basetypes.Enumeration;
+import ch.ehi.interlis.domainsandconstants.basetypes.NumericType;
+import ch.ehi.interlis.domainsandconstants.basetypes.StructAttrType;
+import ch.ehi.interlis.domainsandconstants.basetypes.Text;
+import ch.ehi.interlis.domainsandconstants.basetypes.TextKind;
 import ch.ehi.interlis.domainsandconstants.linetypes.LineFormTypeDef;
 import ch.ehi.interlis.functions.FunctionDef;
 import ch.ehi.interlis.graphicdescriptions.GraphicParameterDef;
@@ -30,6 +36,7 @@ import ch.ehi.interlis.modeltopicclass.ClassDef;
 import ch.ehi.interlis.modeltopicclass.ClassDefKind;
 import ch.ehi.interlis.modeltopicclass.ClassExtends;
 import ch.ehi.interlis.modeltopicclass.INTERLIS2Def;
+import ch.ehi.interlis.modeltopicclass.IliImport;
 import ch.ehi.interlis.modeltopicclass.ModelDef;
 import ch.ehi.interlis.modeltopicclass.TopicDef;
 import ch.ehi.interlis.tools.AbstractClassDefUtility;
@@ -38,10 +45,14 @@ import ch.ehi.interlis.views.ViewDef;
 import ch.ehi.uml1_4.foundation.core.Constraint;
 import ch.ehi.uml1_4.foundation.core.ModelElement;
 import ch.ehi.uml1_4.foundation.core.Namespace;
-import ch.ehi.uml1_4.foundation.extensionmechanisms.TaggedValue;
+import ch.ehi.uml1_4.foundation.datatypes.Multiplicity;
+import ch.ehi.uml1_4.foundation.datatypes.MultiplicityRange;
+import ch.ehi.uml1_4.implementation.AbstractModelElement;
 import ch.ehi.uml1_4.implementation.UmlMultiplicityRange;
 import ch.ehi.uml1_4.modelmanagement.Model;
 import ch.interlis.ili2c.generator.nls.ElementType;
+import net.sourceforge.plantuml.GeneratedImage;
+import net.sourceforge.plantuml.SourceFileReader;
 
 public class TransferToPlantUml {
 
@@ -49,13 +60,15 @@ public class TransferToPlantUml {
     private Map<String, String> classNameMap = new HashMap<>();
     private Set<String> processedAssociations = new HashSet<>();
     private List<String> inheritanceList = new ArrayList<>();
+    private String language;
 
     // TODO
-    // - Vererbungen
-    // - Beziehungen
-    // - Attributtype (Strukturen, Numeric)
-    // - Attributmultiplizität
+    // - Attributtype (Enum?, ...)
     
+    // Konfigmöglichkeiten
+    // - qualifiedNames (wegen Strukturen etc.)
+    // - show attribute type
+    // - show cardinalities / show cardinalities of attributes
     
     /**
      * Exports a model to a PlantUML file
@@ -64,7 +77,7 @@ public class TransferToPlantUml {
      * @param plantUmlFile path of the Destination file
      * @throws Exception Exception
      */
-    public void export(Model model, java.io.File plantUmlFile) throws Exception {
+    public void export(Model model, File plantUmlFile) throws Exception {
         try {
             writer = new PrintWriter(new FileWriter(plantUmlFile));
             
@@ -74,7 +87,8 @@ public class TransferToPlantUml {
             writer.println("skinparam packageStyle rectangle");
             writer.println("skinparam classAttributeIconSize 0");
             writer.println("skinparam monochrome false");
-            writer.println("skinparam shadowing true");
+            writer.println("skinparam shadowing false");
+            writer.println("!pragma layout smetana");
             writer.println();
             
             // Process model elements
@@ -82,16 +96,13 @@ public class TransferToPlantUml {
             while (modelI.hasNext()) {
                 Object obj = modelI.next();
                 if (obj instanceof INTERLIS2Def) {
-                    System.out.println("Processing INTERLIS2Def: " + obj.toString());
                     processModelElement((INTERLIS2Def) obj);
                 } else {
                     // ch.ehi.uml1_4.implementation.UmlPackage
-                    System.out.println("Processing was anderes: " + obj.toString());
                     Iterator i = ch.ehi.interlis.tools.ModelElementUtility.getChildElements((Namespace) obj, null)
                             .iterator();
                     while (i.hasNext()) {
                         Object objnew = i.next();
-                        System.out.println("Processing child: " + objnew);
                         if (objnew instanceof INTERLIS2Def) {
                             processModelElement((INTERLIS2Def) objnew);
                         }
@@ -103,6 +114,15 @@ public class TransferToPlantUml {
             writer.println("@enduml");
             writer.close();
             System.out.println("PlantUML file created successfully: " + plantUmlFile.getAbsolutePath());
+            
+//            File outputDir = new File("path/to/output/folder"); // Define your desired output path
+//            SourceFileReader reader = new SourceFileReader(source, outputDir);
+            
+            SourceFileReader reader = new SourceFileReader(plantUmlFile);
+            List<GeneratedImage> list = reader.getGeneratedImages();
+            System.out.println("Image created: " + list.get(0).getPngFile());
+            
+            
         } catch (IOException e) {
             System.err.println("Error writing PlantUML file: " + e.getMessage());
             throw e;
@@ -113,29 +133,18 @@ public class TransferToPlantUml {
         // Entspricht more or less den importieren Modellen oder die mit "<>"?
         if (!ModelElementUtility.isInternal(obj)) {
             String baselanguage = findBaseLanguage(obj);
+            language = baselanguage;
             Set<String> languages = findLanguages(obj);
             
             // Process all child elements
             Set<ModelElement> childElements = ch.ehi.interlis.tools.ModelElementUtility.getChildElements((Namespace) obj, null);
             Iterator<ModelElement> i = childElements.iterator();
             
-//            // First pass: get classes to handle inheritance
-//            System.out.println("first pass...");
-//            while (i.hasNext()) {
-//                ModelElement modelElement = i.next();
-//                visitClassElement(modelElement, null, baselanguage, languages);
-//            }
-            
-            // Second pass: print the actual puml file
-//            System.out.println("second pass...");
-//            i = childElements.iterator();
             while (i.hasNext()) {
                 ModelElement modelElement = i.next();
-                System.out.println("modelElement: " + modelElement.getName());
+                //System.out.println("modelElement: " + modelElement.getName());
                 visitModelElement(modelElement, null, baselanguage, languages);
             }
-            
-             
         }
     }
     
@@ -168,43 +177,7 @@ public class TransferToPlantUml {
         }
         return languages;
     }
-    
-//    /**
-//     * Process class and structure elements and store necessary information to handle e.g. inheritance correctly.
-//     * We need to be able to identify a puml object, thus we need a unique name of a puml object (= full scoped name).
-//     */
-//    private void visitClassElement(ModelElement modelDef, String scopedNamePrefix, String baselanguage, Set languages) {
-//        String elementType = getElementType(modelDef);
-//        String elementName = modelDef.getName() != null ? modelDef.getName().getValue(baselanguage) : "Unnamed";
-//
-//        String fullScopedName = getScopedName(scopedNamePrefix, modelDef, baselanguage);
-//
-//        if (elementType != null) {
-//            switch (elementType) {
-//                case ElementType.CLASS:
-//                case ElementType.STRUCTURE:
-//                    System.out.println(fullScopedName);
-//                    ClassDef classDef = (ClassDef) modelDef;
-////                    System.out.println(classDef.getOid());
-////                    System.out.println(classDef.hashCode());
-//                    
-//                default:
-//                    break;
-//            }
-//        }
-//        
-//        if (modelDef instanceof Namespace) {
-//            Iterator<ModelElement> childIt = ch.ehi.interlis.tools.ModelElementUtility.getChildElements((Namespace) modelDef, null)
-//                    .iterator();
-//            while (childIt.hasNext()) {
-//                ModelElement childElement = (ModelElement) childIt.next();
-//                visitClassElement(childElement, fullScopedName, baselanguage, languages);
-//            }   
-//        }
-//    }
-    
-    
-    
+        
     /**
      * Processes a model element and generates PlantUML representation
      */
@@ -214,7 +187,7 @@ public class TransferToPlantUml {
         
         // Calculate full scoped name
         String fullScopedName = getScopedName(scopedNamePrefix, modelDef, baselanguage);
-        System.out.println("fullScopedName: " + fullScopedName);
+        //System.out.println("fullScopedName: " + fullScopedName);
         
         // Store class name for later relationship building
         if (elementType != null && (elementType.equals(ElementType.CLASS) || 
@@ -265,8 +238,16 @@ public class TransferToPlantUml {
                     AttributeDef attrDef = (AttributeDef) object;
                     String attrName = attrDef.getName().getValue(baselanguage);
                     String attrType = getAttributeType(attrDef);
-                    
-                    writer.println("  " + attrName + " : " + attrType);
+                           
+                    String multiplicityString = "";
+                    Multiplicity m = attrDef.getMultiplicity();
+                    MultiplicityRange mr = null;
+                    if (m != null) {
+                        mr = (MultiplicityRange) m.iteratorRange().next();
+                        multiplicityString = "[" + mr.getLower() + ".." + (mr.getUpper() == Long.MAX_VALUE ? "*" : mr.getUpper()) + "]";   
+                    }
+
+                    writer.println("  " + attrName + " " + multiplicityString + " : " + attrType);
                     
                     // Process enum attributes if needed
                     if (attrDef.containsAttrType()) {
@@ -300,7 +281,7 @@ public class TransferToPlantUml {
                 processedAssociations.add(fullScopedName);
                 
                 // Process roles and create relationship
-                //processAssociation(assocDef, baselanguage);
+                processAssociation(assocDef, baselanguage);
             }
             
         } else if (modelDef instanceof Namespace) {
@@ -333,6 +314,10 @@ public class TransferToPlantUml {
                     break;
             }
         }
+    }
+    
+    private void visitType(AbstractModelElement owner, Type def) {
+        
     }
     
     /**
@@ -375,8 +360,10 @@ public class TransferToPlantUml {
             RoleDef roleDef = (RoleDef) roleIt.next();
             
             String roleName = roleDef.getName() != null ? roleDef.getName().getValue(baselanguage) : "";
-            String className = roleDef.getParticipant() != null ? 
-                               roleDef.getParticipant().getName().getValue(baselanguage) : "UnknownClass";
+//            String className = roleDef.getParticipant() != null ? 
+//                               roleDef.getParticipant().getName().getValue(baselanguage) : "UnknownClass";
+            
+            String className = ((ClassDef)roleDef.getParticipant()).getOid();
             
             // Get cardinality
             String cardinality = "";
@@ -405,7 +392,7 @@ public class TransferToPlantUml {
         
         // Create PlantUML relationship notation if we have two roles
         if (leftClass != null && rightClass != null) {
-            relationBuilder.append("\"").append(leftClass).append("\"");
+            relationBuilder.append("c").append(leftClass).append("");
             
             if (leftCard != null && !leftCard.isEmpty()) {
                 relationBuilder.append(" \"").append(leftCard).append("\" ");
@@ -422,46 +409,74 @@ public class TransferToPlantUml {
                 relationBuilder.append(" ");
             }
             
-            relationBuilder.append("\"").append(rightClass).append("\"");
+            relationBuilder.append("c").append(rightClass).append("");
             
             // Add roles and association name if present
-            if ((leftRole != null && !leftRole.isEmpty()) || (rightRole != null && !rightRole.isEmpty())) {
-                relationBuilder.append(" : ");
-                
-                if (leftRole != null && !leftRole.isEmpty()) {
-                    relationBuilder.append(leftRole).append(" ");
-                }
-                
-                if (assocName != null && !assocName.isEmpty()) {
-                    relationBuilder.append("(").append(assocName).append(") ");
-                }
-                
-                if (rightRole != null && !rightRole.isEmpty()) {
-                    relationBuilder.append(rightRole);
-                }
-            }
+//            if ((leftRole != null && !leftRole.isEmpty()) || (rightRole != null && !rightRole.isEmpty())) {
+//                relationBuilder.append(" : ");
+//                
+//                if (leftRole != null && !leftRole.isEmpty()) {
+//                    relationBuilder.append(leftRole).append(" ");
+//                }
+//                
+//                if (assocName != null && !assocName.isEmpty()) {
+//                    relationBuilder.append("(").append(assocName).append(") ");
+//                }
+//                
+//                if (rightRole != null && !rightRole.isEmpty()) {
+//                    relationBuilder.append(rightRole);
+//                }
+//            }
             
             writer.println(relationBuilder.toString());
             writer.println();
         }
     }
 
-    private String getAttributeType(AttributeDef attrDef) {
-        
-        System.out.println(attrDef.getDefLangName());
-        System.out.println(attrDef.getAttrType().getAttributeDef().getDefLangName());
-        
-        
+    private String getAttributeType(AttributeDef attrDef) {        
         if (attrDef.containsAttrType()) {
             DomainAttribute attr = (DomainAttribute) attrDef.getAttrType();            
             if (attr.containsDomainDef()) {
-                System.out.println("containsDomainDef");
                 return attr.getDomainDef().getDefLangName();
             } else if (attr.containsDirect()) {
-                System.out.println("direct");
-                System.out.println(attr.getClass());
                 Type type = attr.getDirect();
-                //System.out.println(type);
+                
+                if (type instanceof StructAttrType) {
+                    StructAttrType structAttrType = (StructAttrType) (type);
+                    return structAttrType.getParticipant().getDefLangName();
+                    //return classRef(attrDef, structAttrType.getParticipant());
+                } else if (type instanceof BooleanType)  {
+                    return "BOOLEAN";
+                } else if (type instanceof Text) {
+                    Text text = (Text)type;
+                    switch (text.getKind()) {
+                    case TextKind.UNDEFINED:
+                        String typeTag = "TEXT";
+                        if (text.isMultiline()) {
+                            typeTag = "MTEXT";
+                        }
+                        return typeTag;
+                    case TextKind.MAXLEN:
+                        typeTag = "TEXT";
+                        if (text.isMultiline()) {
+                            typeTag = "MTEXT";
+                        }
+                        return (typeTag + "*" + Long.toString(text.getMaxLength()));
+                    case TextKind.NAME:
+                        return ("NAME");
+                    case TextKind.URI:
+                        return ("URI");
+                    }
+                } else if (type instanceof NumericType) {
+                    NumericType numeric = (NumericType)type;
+                    if (numeric.isRangeDefined()) {
+                        return numeric.getMinDec().toString() + ".." + numeric.getMaxDec().toString();
+                    } else {
+                        return "NUMERIC";
+                    }
+                    
+                }
+
                 // Return a string representation of the type
                 return type.getClass().getSimpleName().replace("Def", "");
             }
@@ -530,4 +545,30 @@ public class TransferToPlantUml {
         }
     }
 
+    private String classRef(ModelElement source, AbstractClassDef ref) {
+        if ("ANYCLASS".equals(ref.getDefLangName())) {
+            return "ANYCLASS";
+        }
+        if ("ANYSTRUCTURE".equals(ref.getDefLangName())) {
+            return "ANYSTRUCTURE";
+        }
+        return modelElementRef(source, ref, null);
+    }
+    
+    private String modelElementRef(ModelElement source, ModelElement ref, String language) {
+        if (language == null) {
+            language = this.language;
+        }
+        ModelDef modelOfSource = null;
+        ModelDef modelOfRef = null;
+        modelOfSource = ch.ehi.interlis.tools.ModelElementUtility.getModel(source);
+        modelOfRef = ch.ehi.interlis.tools.ModelElementUtility.getModel(ref);
+        if (!modelOfRef.equals(modelOfSource)) {
+            final IliImport iliImp = modelOfSource.getImport(modelOfRef);
+            if (iliImp != null) {
+                language = iliImp.getSupplierLanguage(language);
+            }
+        }
+        return ch.ehi.interlis.tools.ModelElementUtility.getIliQualifiedName(source, ref, language);
+    }
 }
