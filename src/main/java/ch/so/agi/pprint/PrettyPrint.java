@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
+import java.util.UUID;
 
 import ch.ehi.interlis.modeltopicclass.INTERLIS2Def;
 import ch.ehi.uml1_4.foundation.core.Namespace;
@@ -19,7 +20,7 @@ import ch.interlis.ili2c.metamodel.TransferDescription;
 
 public class PrettyPrint {
 
-    public static boolean run(File iliFiles[], Path outputDir, String modeldir) {
+    public static boolean run(File iliFiles[], Path outputDir, String modeldir, String plantumlFileName) {
         Configuration config = new Configuration();
         for (int filei = 0; filei < iliFiles.length; filei++) {
             config.addFileEntry(new ch.interlis.ili2c.config.FileEntry(
@@ -44,50 +45,52 @@ public class PrettyPrint {
 
             TransferFromIli2cMetamodel convert = new TransferFromIli2cMetamodel();
             convert.visitTransferDescription(model, ili2cModel, null, config);
-
-            TransferToPlantUml transferToPlantUml =  new TransferToPlantUml();
-            try {
-                System.out.println("vorher");
-                transferToPlantUml.export(model, new File("/Users/stefan/tmp/foo.puml"));
-                System.out.println("nachher");
-            } catch (Exception e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+            
+            TransferFromUmlMetamodel writer = new TransferFromUmlMetamodel(outputDir);
+            Iterator<UmlModel> modelI = model.iteratorOwnedElement();
+            while (modelI.hasNext()) {
+                Object obj = modelI.next();
+                if (obj instanceof INTERLIS2Def) {
+                    INTERLIS2Def objnew = (INTERLIS2Def) obj;
+                    try {
+                        writer.getFileList(objnew.getNamespace());
+                        writer.writeIliFile(objnew);
+                    } catch (IOException ex) {
+                       ex.printStackTrace();
+                       return false;
+                    }
+                } else {
+                    Iterator i = ch.ehi.interlis.tools.ModelElementUtility.getChildElements((Namespace) obj, null)
+                            .iterator();
+                    while (i.hasNext()) {
+                        Object obji = i.next();
+                        if (obji instanceof INTERLIS2Def) {
+                            INTERLIS2Def objnew = (INTERLIS2Def) obji;
+                            if (!objnew.getName().getValue().startsWith("<")) {
+                                try {
+                                    writer.getFileList(objnew.getNamespace());
+                                    writer.writeIliFile(objnew);
+                                } catch (IOException ex) {
+                                    ex.printStackTrace();
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                }
             }
             
-//            TransferFromUmlMetamodel writer = new TransferFromUmlMetamodel(outputDir);
-//            Iterator<UmlModel> modelI = model.iteratorOwnedElement();
-//            while (modelI.hasNext()) {
-//                Object obj = modelI.next();
-//                if (obj instanceof INTERLIS2Def) {
-//                    INTERLIS2Def objnew = (INTERLIS2Def) obj;
-//                    try {
-//                        writer.getFileList(objnew.getNamespace());
-//                        writer.writeIliFile(objnew);
-//                    } catch (IOException ex) {
-//                       ex.printStackTrace();
-//                       return false;
-//                    }
-//                } else {
-//                    Iterator i = ch.ehi.interlis.tools.ModelElementUtility.getChildElements((Namespace) obj, null)
-//                            .iterator();
-//                    while (i.hasNext()) {
-//                        Object obji = i.next();
-//                        if (obji instanceof INTERLIS2Def) {
-//                            INTERLIS2Def objnew = (INTERLIS2Def) obji;
-//                            if (!objnew.getName().getValue().startsWith("<")) {
-//                                try {
-//                                    writer.getFileList(objnew.getNamespace());
-//                                    writer.writeIliFile(objnew);
-//                                } catch (IOException ex) {
-//                                    ex.printStackTrace();
-//                                    return false;
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
+            if (plantumlFileName != null) {
+                TransferToPlantUml transferToPlantUml =  new TransferToPlantUml();
+                try {
+                    String fileName = UUID.randomUUID().toString();
+                    transferToPlantUml.export(model, outputDir.resolve(plantumlFileName));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return false;
+                }
+            }
+            
             return true; 
         } else {
             return false;

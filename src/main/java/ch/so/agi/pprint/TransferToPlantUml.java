@@ -1,9 +1,13 @@
 package ch.so.agi.pprint;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,6 +15,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.io.OutputStream; 
 
 import ch.ehi.interlis.associations.AssociationDef;
 import ch.ehi.interlis.associations.RoleDef;
@@ -51,8 +57,11 @@ import ch.ehi.uml1_4.implementation.AbstractModelElement;
 import ch.ehi.uml1_4.implementation.UmlMultiplicityRange;
 import ch.ehi.uml1_4.modelmanagement.Model;
 import ch.interlis.ili2c.generator.nls.ElementType;
+import net.sourceforge.plantuml.FileFormat;
+import net.sourceforge.plantuml.FileFormatOption;
 import net.sourceforge.plantuml.GeneratedImage;
 import net.sourceforge.plantuml.SourceFileReader;
+import net.sourceforge.plantuml.SourceStringReader;
 
 public class TransferToPlantUml {
 
@@ -63,27 +72,36 @@ public class TransferToPlantUml {
     private String language;
 
     // TODO
-    // - Attributtype (Enum?, ...)
+    // - Attributtype (?, ...)
     
     // Konfigmöglichkeiten
     // - qualifiedNames (wegen Strukturen etc.)
     // - show attribute type
     // - show cardinalities / show cardinalities of attributes
     
+    public TransferToPlantUml() {
+        
+    }
+    
     /**
      * Exports a model to a PlantUML file
      * 
      * @param model Source Data
-     * @param plantUmlFile path of the Destination file
+     * @param plantUmlFile path of the destination file
      * @throws Exception Exception
      */
-    public void export(Model model, File plantUmlFile) throws Exception {
+    public void export(Model model, Path plantUmlFile) throws Exception {
         try {
-            writer = new PrintWriter(new FileWriter(plantUmlFile));
+            
+            //File pumlFile = Paths.get(System.getProperty("java.io.tmpdir"), UUID.randomUUID() +  ".puml").toFile();
+            
+            File pumlFile = Paths.get(plantUmlFile.getParent().toString(), getFileNameWithoutExtension(plantUmlFile.getFileName().toString()) + ".puml").toFile();
+            
+            writer = new PrintWriter(new FileWriter(pumlFile));
             
             // Start PlantUML diagram
             writer.println("@startuml");
-            writer.println("' INTERLIS model diagram");
+            writer.println("' INTERLIS model uml diagram");
             writer.println("skinparam packageStyle rectangle");
             writer.println("skinparam classAttributeIconSize 0");
             writer.println("skinparam monochrome false");
@@ -113,15 +131,21 @@ public class TransferToPlantUml {
             // End PlantUML diagram
             writer.println("@enduml");
             writer.close();
-            System.out.println("PlantUML file created successfully: " + plantUmlFile.getAbsolutePath());
+            System.out.println("PlantUML file created successfully: " + pumlFile.getAbsolutePath());
             
 //            File outputDir = new File("path/to/output/folder"); // Define your desired output path
 //            SourceFileReader reader = new SourceFileReader(source, outputDir);
             
-            SourceFileReader reader = new SourceFileReader(plantUmlFile);
+            SourceFileReader reader = new SourceFileReader(pumlFile);
             List<GeneratedImage> list = reader.getGeneratedImages();
             System.out.println("Image created: " + list.get(0).getPngFile());
             
+            String plantUmlString = Files.readString(pumlFile.toPath());
+            File outputFile = new File("/Users/stefan/tmp/foo.pdf"); 
+            try (OutputStream os = new FileOutputStream(outputFile)) {
+                SourceStringReader sreader = new SourceStringReader(plantUmlString);
+                sreader.generateImage(os, new FileFormatOption(FileFormat.PDF)); 
+            }
             
         } catch (IOException e) {
             System.err.println("Error writing PlantUML file: " + e.getMessage());
@@ -222,6 +246,12 @@ public class TransferToPlantUml {
                     // Associations are handled separately when processing roles
                     break;
                     
+                case ElementType.DOMAIN:                    
+                    DomainDef domainDef = (DomainDef) modelDef;
+                    if (domainDef.getType() instanceof Enumeration) {
+                        writer.println("enum" + " \"" + domainDef.getDefLangName() + "\" as e" + domainDef.getOid() + " {"); 
+
+                    }                    
                 default:
                     // Other element types not directly represented in class diagram
                     break;
@@ -301,6 +331,7 @@ public class TransferToPlantUml {
         if (elementType != null) {
             switch (elementType) {
                 case ElementType.MODEL:
+                case ElementType.DOMAIN:    
                 case ElementType.TOPIC:
                 case ElementType.CLASS:
                 case ElementType.STRUCTURE:
@@ -433,10 +464,11 @@ public class TransferToPlantUml {
         }
     }
 
-    private String getAttributeType(AttributeDef attrDef) {        
+    private String getAttributeType(AttributeDef attrDef) {                
         if (attrDef.containsAttrType()) {
             DomainAttribute attr = (DomainAttribute) attrDef.getAttrType();            
             if (attr.containsDomainDef()) {
+                // e.g. enums                
                 return attr.getDomainDef().getDefLangName();
             } else if (attr.containsDirect()) {
                 Type type = attr.getDirect();
@@ -475,7 +507,7 @@ public class TransferToPlantUml {
                         return "NUMERIC";
                     }
                     
-                }
+                } 
 
                 // Return a string representation of the type
                 return type.getClass().getSimpleName().replace("Def", "");
@@ -571,4 +603,21 @@ public class TransferToPlantUml {
         }
         return ch.ehi.interlis.tools.ModelElementUtility.getIliQualifiedName(source, ref, language);
     }
+    
+    private static String getFileNameWithoutExtension(String filePath) {
+        String fileName = Paths.get(filePath).getFileName().toString();
+        int dotIndex = fileName.lastIndexOf('.');
+        if (dotIndex > 0) {
+            return fileName.substring(0, dotIndex);
+        }
+        return fileName;
+    }
+    
+    public static final String SHOW_ATTRIBUTES = "ch.so.agi.interlis.uml.showAttributes";
+    
+    public static final String SHOW_ATTRIBUTE_TYPES = "ch.so.agi.interlis.uml.showAttributeTypes";
+    
+    public static final String SHOW_CARDINALITIES_OF_ATTRIBUTES = "ch.so.agi.interlis.uml.showCardinalitiesOfAttributes";
+    
+    public static final String SHOW_CARDINALITIES = "ch.so.agi.interlis.uml.showCardinalities";
 }
