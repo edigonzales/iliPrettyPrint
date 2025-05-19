@@ -39,12 +39,6 @@ dependencies {
     annotationProcessor libs.picocli.codegen
 }
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(11)
-    }
-}
-
 application {
     mainClass = 'ch.so.agi.pprint.App'
 }
@@ -158,7 +152,7 @@ jreleaser {
             java {
                 groupId = 'io.github.sogis'
                 artifactId = "iliprettyprint"
-                version = '11'
+                version = '21'
             }
         }
     }

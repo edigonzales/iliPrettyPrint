@@ -6,11 +6,11 @@ allprojects {
     apply plugin: 'java'
     apply from: "$rootDir/gradle/versioning.gradle"
  
-    sourceCompatibility = 11
-    targetCompatibility = 11
+    sourceCompatibility = 21
+    targetCompatibility = 21
 
     compileJava {
-        options.compilerArgs.addAll(['--release', '11'])
+        options.compilerArgs.addAll(['--release', '21'])
     }
 
     repositories {
