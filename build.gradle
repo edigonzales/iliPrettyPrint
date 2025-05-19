@@ -73,7 +73,7 @@ tasks.named('test') {
 run {
     //args = ["--help"]
     //args = ["--ili", "src/test/data/SO_ARP_SEin_Konfiguration_20250115.ili", "--out", "/Users/stefan/tmp/"]
-    args = ["--ili", "src/test/data/SO_ARP_SEin_Konfiguration_20250115.ili", "--out", "/Users/stefan/tmp/", "--plantuml", "bar.png"]
+    args = ["--ili", "src/test/data/SO_ARP_SEin_Konfiguration_20250115.ili", "--out", "/Users/stefan/tmp/", "--plantuml", "bar.pdf"]
     //args = ["--ili", "src/test/data/SO_Nutzungsplanung_20171118_Validierung_20231101.ili", "--out", "/Users/stefan/tmp/"]
     //args = ["--ili", "src/test/data/GeoW_FunctionsExt_23.ili", "--out", "/Users/stefan/tmp/"]
     //args = ["--ili", "src/test/data/VSADSSMINI_2020_2_d_LV95-20230807.ili", "--out", "/Users/stefan/tmp/"]

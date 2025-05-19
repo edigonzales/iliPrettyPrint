@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.UUID;
 
+import ch.ehi.basics.settings.Settings;
 import ch.ehi.interlis.modeltopicclass.INTERLIS2Def;
 import ch.ehi.uml1_4.foundation.core.Namespace;
 import ch.ehi.uml1_4.implementation.UmlModel;
@@ -83,8 +84,11 @@ public class PrettyPrint {
             if (plantumlFileName != null) {
                 TransferToPlantUml transferToPlantUml =  new TransferToPlantUml();
                 try {
-                    String fileName = UUID.randomUUID().toString();
-                    transferToPlantUml.export(model, outputDir.resolve(plantumlFileName));
+                    settings.setValue(TransferToPlantUml.SHOW_ATTRIBUTES, String.valueOf(true));
+                    settings.setValue(TransferToPlantUml.SHOW_ATTRIBUTE_TYPES, String.valueOf(true));
+                    settings.setValue(TransferToPlantUml.SHOW_CARDINALITIES_OF_ATTRIBUTES, String.valueOf(true));
+                    settings.setValue(TransferToPlantUml.SHOW_CARDINALITIES, String.valueOf(true));
+                    transferToPlantUml.export(model, outputDir.resolve(plantumlFileName), settings);
                 } catch (Exception e) {
                     e.printStackTrace();
                     return false;

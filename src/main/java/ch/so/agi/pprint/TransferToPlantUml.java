@@ -62,6 +62,7 @@ import net.sourceforge.plantuml.FileFormatOption;
 import net.sourceforge.plantuml.GeneratedImage;
 import net.sourceforge.plantuml.SourceFileReader;
 import net.sourceforge.plantuml.SourceStringReader;
+import ch.ehi.basics.settings.Settings;
 
 public class TransferToPlantUml {
 
@@ -70,15 +71,18 @@ public class TransferToPlantUml {
     private Set<String> processedAssociations = new HashSet<>();
     private List<String> inheritanceList = new ArrayList<>();
     private String language;
+    private Settings settings;
+    private boolean showAttributes = false;
+    private boolean showAttributeTypes = false;
+    private boolean showCardinalitiesOfAttributes = false;
+    private boolean showCardinalities = true;
 
     // TODO
     // - Attributtype (?, ...)
     
     // Konfigmöglichkeiten
     // - qualifiedNames (wegen Strukturen etc.)
-    // - show attribute type
-    // - show cardinalities / show cardinalities of attributes
-    
+
     public TransferToPlantUml() {
         
     }
@@ -90,11 +94,14 @@ public class TransferToPlantUml {
      * @param plantUmlFile path of the destination file
      * @throws Exception Exception
      */
-    public void export(Model model, Path plantUmlFile) throws Exception {
+    public void export(Model model, Path plantUmlFile, Settings settings) throws Exception {
+        this.settings = settings;
+        showAttributes = Boolean.valueOf(settings.getValue(TransferToPlantUml.SHOW_ATTRIBUTES));
+        showAttributeTypes = Boolean.valueOf(settings.getValue(TransferToPlantUml.SHOW_ATTRIBUTE_TYPES));
+        showCardinalitiesOfAttributes = Boolean.valueOf(settings.getValue(TransferToPlantUml.SHOW_CARDINALITIES_OF_ATTRIBUTES));
+        showCardinalities = Boolean.valueOf(settings.getValue(TransferToPlantUml.SHOW_CARDINALITIES));
+        
         try {
-            
-            //File pumlFile = Paths.get(System.getProperty("java.io.tmpdir"), UUID.randomUUID() +  ".puml").toFile();
-            
             File pumlFile = Paths.get(plantUmlFile.getParent().toString(), getFileNameWithoutExtension(plantUmlFile.getFileName().toString()) + ".puml").toFile();
             
             writer = new PrintWriter(new FileWriter(pumlFile));
@@ -131,24 +138,27 @@ public class TransferToPlantUml {
             // End PlantUML diagram
             writer.println("@enduml");
             writer.close();
-            System.out.println("PlantUML file created successfully: " + pumlFile.getAbsolutePath());
             
 //            File outputDir = new File("path/to/output/folder"); // Define your desired output path
 //            SourceFileReader reader = new SourceFileReader(source, outputDir);
             
-            SourceFileReader reader = new SourceFileReader(pumlFile);
-            List<GeneratedImage> list = reader.getGeneratedImages();
-            System.out.println("Image created: " + list.get(0).getPngFile());
+//            SourceFileReader reader = new SourceFileReader(pumlFile);
+//            List<GeneratedImage> list = reader.getGeneratedImages();
+//            System.out.println("Image created: " + list.get(0).getPngFile());
             
             String plantUmlString = Files.readString(pumlFile.toPath());
-            File outputFile = new File("/Users/stefan/tmp/foo.pdf"); 
-            try (OutputStream os = new FileOutputStream(outputFile)) {
+            try (OutputStream os = new FileOutputStream(plantUmlFile.toFile())) {
                 SourceStringReader sreader = new SourceStringReader(plantUmlString);
-                sreader.generateImage(os, new FileFormatOption(FileFormat.PDF)); 
+                if (plantUmlFile.toString().toLowerCase().endsWith("png")) {
+                    sreader.generateImage(os, new FileFormatOption(FileFormat.PNG));                     
+                } else if (plantUmlFile.toString().toLowerCase().endsWith("pdf")) {
+                    sreader.generateImage(os, new FileFormatOption(FileFormat.PDF));                                         
+                } else {
+                    throw new IOException("not supported file format");
+                }
             }
             
         } catch (IOException e) {
-            System.err.println("Error writing PlantUML file: " + e.getMessage());
             throw e;
         }
     }
@@ -277,7 +287,9 @@ public class TransferToPlantUml {
                         multiplicityString = "[" + mr.getLower() + ".." + (mr.getUpper() == Long.MAX_VALUE ? "*" : mr.getUpper()) + "]";   
                     }
 
-                    writer.println("  " + attrName + " " + multiplicityString + " : " + attrType);
+                    if (showAttributes) {
+                        writer.println("  " + attrName + " " + (showCardinalitiesOfAttributes ? multiplicityString : "") + (showAttributeTypes ?  " : " + attrType : ""));                        
+                    }
                     
                     // Process enum attributes if needed
                     if (attrDef.containsAttrType()) {
@@ -398,13 +410,15 @@ public class TransferToPlantUml {
             
             // Get cardinality
             String cardinality = "";
-            Iterator rangeIt = roleDef.getMultiplicity().iteratorRange();
-            if (rangeIt.hasNext()) {
-                UmlMultiplicityRange range = (UmlMultiplicityRange) rangeIt.next();
-                if (range.getLower() == range.getUpper()) {
-                    cardinality = Long.toString(range.getLower());
-                } else {
-                    cardinality = range.getLower() + ".." + (range.getUpper() == Long.MAX_VALUE ? "*" : range.getUpper());   
+            if (showCardinalities) {
+                Iterator rangeIt = roleDef.getMultiplicity().iteratorRange();
+                if (rangeIt.hasNext()) {
+                    UmlMultiplicityRange range = (UmlMultiplicityRange) rangeIt.next();
+                    if (range.getLower() == range.getUpper()) {
+                        cardinality = Long.toString(range.getLower());
+                    } else {
+                        cardinality = range.getLower() + ".." + (range.getUpper() == Long.MAX_VALUE ? "*" : range.getUpper());   
+                    }                
                 }                
             }
             
