@@ -36,13 +36,13 @@ jobs:
 
       - name: Debug 1
         run: |
-          ls -la build/libs
+          ls -la app/build/libs
 
       - uses: actions/upload-artifact@v4
         if: always() && (steps.buildDevelopLib.outcome == 'failure' || steps.buildReleaseLib.outcome == 'failure')
         with:
           name: reports
-          path: build/reports/tests/
+          path: app/build/reports/tests/
 
       - name: Decode
         if: always() && (steps.buildDevelopLib.outcome == 'success' || steps.buildReleaseLib.outcome == 'success')
