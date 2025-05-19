@@ -1,134 +1,26 @@
 plugins {
-    id 'application'
-    id 'maven-publish'
-    id 'com.gradleup.shadow' version '8.3.6'
-    //id 'com.github.johnrengelman.shadow' version '8.1.1'
-    id 'signing'
     id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
-    id 'org.jreleaser' version '1.17.0'
 }
 
-apply from: "$rootDir/gradle/versioning.gradle"
+allprojects {
+    apply plugin: 'java'
+    apply from: "$rootDir/gradle/versioning.gradle"
+ 
+    sourceCompatibility = 11
+    targetCompatibility = 11
+
+    compileJava {
+        options.compilerArgs.addAll(['--release', '11'])
+    }
+
+    repositories {
+        mavenCentral()
+        flatDir { dirs "$rootDir/app/lib" }
+        maven { url "https://jars.sogeo.services/mirror" }
+    }
+}
 
 group = 'io.github.sogis'
-
-sourceCompatibility = 11
-targetCompatibility = 11
-
-compileJava {
-    options.compilerArgs.addAll(['--release', '11'])
-}
-
-repositories {
-    mavenCentral()
-    maven { url "https://jars.interlis.ch" }
-    flatDir { dirs 'lib' }
-}
-
-dependencies {
-    testImplementation libs.junit.jupiter
-
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
-    implementation libs.ili2c.core
-    implementation libs.ili2c.tool
-    implementation libs.ehibasics
-    implementation libs.umleditor // Muss trotzdem lokal vorliegen: https://github.com/claeis/umleditor/issues/84
-    
-    implementation libs.jaxb.api
-    implementation libs.jaxb.core
-    implementation libs.jaxb.impl
-    
-    implementation name: 'sebase'
-    implementation name: 'jhotdraw53'
-    implementation name: 'XMIFramework'
-    
-    implementation libs.plantuml
-    
-    implementation libs.batik.transcoder
-    implementation libs.batik.codec
-    implementation libs.batik.svggen
-    implementation libs.batik.rasterizer
-    implementation libs.fop
-   
-    implementation libs.picocli
-    implementation libs.picocli.codegen
-    annotationProcessor libs.picocli.codegen
-}
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(11)
-    }
-}
-
-application {
-    mainClass = 'ch.so.agi.pprint.App'
-}
-
-tasks.named('test') {
-    useJUnitPlatform()
-}
-
-run {
-    //args = ["--help"]
-    //args = ["--ili", "src/test/data/SO_ARP_SEin_Konfiguration_20250115.ili", "--out", "/Users/stefan/tmp/"]
-    args = ["--ili", "src/test/data/SO_ARP_SEin_Konfiguration_20250115.ili", "--out", "/Users/stefan/tmp/", "--plantuml", "bar.pdf"]
-    //args = ["--ili", "src/test/data/SO_Nutzungsplanung_20171118_Validierung_20231101.ili", "--out", "/Users/stefan/tmp/"]
-    //args = ["--ili", "src/test/data/GeoW_FunctionsExt_23.ili", "--out", "/Users/stefan/tmp/"]
-    //args = ["--ili", "src/test/data/VSADSSMINI_2020_2_d_LV95-20230807.ili", "--out", "/Users/stefan/tmp/"]
-}
-
-task sourcesJar(type: Jar, dependsOn: classes) {
-    archiveClassifier = 'sources'
-    from sourceSets.main.allSource
-}
-
-javadoc.failOnError = false
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    archiveClassifier = 'javadoc'
-    from javadoc.destinationDir
-}
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-            artifact sourcesJar
-            artifact javadocJar
-
-            pom {
-                name = "iliprettyprint"
-                url = "https://github.com/edigonzales/iliPrettyPrint"
-                description = "INTERLIS pretty printer"
-                scm {
-                    connection = "scm:git:https@github.com/edigonzales/iliPrettyPrint"
-                    developerConnection = "scm:git:https@github.com/edigonzales/iliPrettyPrint"
-                    url = "https://github.com/edigonzales/iliPrettyPrint"
-                }
-                licenses {
-                    license {
-                        name = "MIT"
-                        url = "https://github.com/edigonzales/iliPrettyPrint/blob/master/LICENSE"
-                    }
-                }
-                developers {
-                    developer {
-                        id = "edigonzales"
-                        name = "Stefan Ziegler"
-                    }
-                }
-            }
-        }
-    }
-}
-
-//if (System.getProperty('release') != null) {
-if (true) {
-    signing {
-        sign publishing.publications.mavenJava
-    }
-}
 
 nexusPublishing {
     repositories {
@@ -137,41 +29,6 @@ nexusPublishing {
             snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
             username = findProperty("ossrhUsername") ?: System.getenv("OSSRH_USERNAME")
             password = findProperty("ossrhPassword") ?: System.getenv("OSSRH_PASSWORD")
-        }
-    }
-}
-
-jreleaser {
-    gitRootSearch = true
-    
-    project {
-        name = "iliprettyprint"
-        description = 'INTERLIS pretty printer'
-        website = 'https://agi.so.ch'
-        authors = ['edigonzales']
-        license = 'MIT'
-        docsUrl = 'https://github.com/edigonzales/iliPrettyPrint'
-        copyright = '2025 Stefan Ziegler'
-    }
-    release {
-        github {
-            repoOwner = 'edigonzales'
-            overwrite = true
-            apiEndpoint = 'https://api.github.com'
-        }
-    }
-    distributions {
-        appJvm {
-            distributionType = 'SINGLE_JAR'
-            stereotype = 'CLI'
-            artifact {
-                path = "build/libs/iliprettyprint-${version}-all.jar"
-            }
-            java {
-                groupId = 'io.github.sogis'
-                artifactId = "iliprettyprint"
-                version = '11'
-            }
         }
     }
 }

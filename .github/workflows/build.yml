@@ -24,15 +24,15 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
           
-      - name: Build with Gradle (DEVELOP)
+      - name: Build application with Gradle (DEVELOP)
         if: ${{ success() && github.ref != 'refs/heads/main'}}
         id: buildDevelopLib
-        run: ./gradlew clean build sourcesJar javadocJar 
+        run: ./gradlew clean app:build app:sourcesJar app:javadocJar 
 
-      - name: Build with Gradle (RELEASE)
+      - name: Build application with Gradle (RELEASE)
         if: ${{ success() && github.ref == 'refs/heads/main'}}
         id: buildReleaseLib
-        run: ./gradlew clean build sourcesJar javadocJar -Drelease= 
+        run: ./gradlew clean app:build app:sourcesJar app:javadocJar -Drelease= 
 
       - name: Debug 1
         run: |
@@ -59,7 +59,7 @@ jobs:
 
       - name: Publish application jar file (RELEASE)
         if: ${{ success() && (github.ref == 'refs/heads/main')}}
-        run: ./gradlew -i publishToSonatype closeAndReleaseSonatypeStagingRepository -Psigning.keyId=${{secrets.SIGNING_KEY_ID}} -Psigning.password=${{secrets.SIGNING_PASSWORD}} -Psigning.secretKeyRingFile=$(echo ~/.gradle/sonatype_upload.gpg) -Drelease=
+        run: ./gradlew -i app:publishToSonatype app:closeAndReleaseSonatypeStagingRepository -Psigning.keyId=${{secrets.SIGNING_KEY_ID}} -Psigning.password=${{secrets.SIGNING_PASSWORD}} -Psigning.secretKeyRingFile=$(echo ~/.gradle/sonatype_upload.gpg) -Drelease=
         env:
           OSSRH_USERNAME: ${{secrets.OSSRH_USERNAME}}
           OSSRH_PASSWORD: ${{secrets.OSSRH_PASSWORD}} 
@@ -68,7 +68,7 @@ jobs:
         #if: ${{ success() && github.ref == 'refs/heads/stable'}}
         if: ${{ success() && github.ref == 'refs/heads/main'}}
         run: |
-          ./gradlew -s jreleaserRelease -Drelease=
+          ./gradlew -s app:jreleaserRelease -Drelease=
         # run: |
         #   ./gradlew -s jreleaserRelease 
         env:
