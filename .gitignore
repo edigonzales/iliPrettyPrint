@@ -191,7 +191,7 @@ modules.xml
 
 # Package Files #
 *.jar
-!lib/*.jar
+!app/lib/*.jar
 *.war
 *.nar
 *.ear
