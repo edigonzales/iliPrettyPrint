@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
+import java.util.UUID;
 
+import ch.ehi.basics.settings.Settings;
 import ch.ehi.interlis.modeltopicclass.INTERLIS2Def;
 import ch.ehi.uml1_4.foundation.core.Namespace;
 import ch.ehi.uml1_4.implementation.UmlModel;
@@ -14,11 +16,12 @@ import ch.ehi.umleditor.interlis.iliimport.TransferFromIli2cMetamodel;
 import ch.interlis.ili2c.Ili2cSettings;
 import ch.interlis.ili2c.config.Configuration;
 import ch.interlis.ili2c.config.GenerateOutputKind;
+import ch.interlis.ili2c.generator.nls.ModelElements;
 import ch.interlis.ili2c.metamodel.TransferDescription;
 
 public class PrettyPrint {
 
-    public static boolean run(File iliFiles[], Path outputDir, String modeldir) {
+    public static boolean run(File iliFiles[], Path outputDir, String modeldir, String plantumlFileName) {
         Configuration config = new Configuration();
         for (int filei = 0; filei < iliFiles.length; filei++) {
             config.addFileEntry(new ch.interlis.ili2c.config.FileEntry(
@@ -43,7 +46,7 @@ public class PrettyPrint {
 
             TransferFromIli2cMetamodel convert = new TransferFromIli2cMetamodel();
             convert.visitTransferDescription(model, ili2cModel, null, config);
-
+            
             TransferFromUmlMetamodel writer = new TransferFromUmlMetamodel(outputDir);
             Iterator<UmlModel> modelI = model.iteratorOwnedElement();
             while (modelI.hasNext()) {
@@ -77,6 +80,21 @@ public class PrettyPrint {
                     }
                 }
             }
+            
+            if (plantumlFileName != null) {
+                TransferToPlantUml transferToPlantUml =  new TransferToPlantUml();
+                try {
+                    settings.setValue(TransferToPlantUml.SHOW_ATTRIBUTES, String.valueOf(true));
+                    settings.setValue(TransferToPlantUml.SHOW_ATTRIBUTE_TYPES, String.valueOf(true));
+                    settings.setValue(TransferToPlantUml.SHOW_CARDINALITIES_OF_ATTRIBUTES, String.valueOf(true));
+                    settings.setValue(TransferToPlantUml.SHOW_CARDINALITIES, String.valueOf(true));
+                    transferToPlantUml.export(model, outputDir.resolve(plantumlFileName), settings);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return false;
+                }
+            }
+            
             return true; 
         } else {
             return false;

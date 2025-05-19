@@ -24,7 +24,20 @@ GeometryCHLV95_V1,
 
 Text;
 
-                 CLASS Gemeinde (ABSTRACT) =
+  DOMAIN
+
+Status_Geschaeft = (
+    foo,
+    bar
+);
+
+
+CLASS MyBase (ABSTRACT) =
+  aId : TEXT*10;
+  aEnum: Status_Geschaeft;
+END MyBase;
+
+                 CLASS Gemeinde (ABSTRACT) EXTENDS MyBase =
     
     
     

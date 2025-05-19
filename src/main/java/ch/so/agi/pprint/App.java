@@ -25,24 +25,20 @@ public class App implements Callable<Integer> {
     @Option(names = "--modeldir", description = "List of directories/repositories", paramLabel = "<modeldir>", required = false)
     private String modeldir;
 
-//    public static void main(String[] args) {
-//        System.out.println("Hallo Welt.");
-//        
-//        ImportInterlis.readIliFile(new File[] {new File("src/test/data/SO_ARP_SEin_Konfiguration_20250115.ili")});
-//        
-//        
-//    }
+    @Option(names = "--plantuml", description = "Create PlantUML diagram", paramLabel = "<umlFileName>", required = false)
+    private String plantumlFileName;
     
     @Override
     public Integer call() {
         System.out.println("ILI file: " + iliFile.toAbsolutePath());
         System.out.println("Output file: " + outputDir.toAbsolutePath());
         System.out.println("Model dir: " + modeldir);
+        System.out.println("plantumlFileName: " + plantumlFileName);
         
         if (outputDir == null) {
             outputDir = iliFile.getParent();
         }
-        boolean ret = PrettyPrint.run(new File[] {iliFile.toFile()}, outputDir, modeldir);
+        boolean ret = PrettyPrint.run(new File[] {iliFile.toFile()}, outputDir, modeldir, plantumlFileName);
         return ret ? 0 : 1;        
     }
 
