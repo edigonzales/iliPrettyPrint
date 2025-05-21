@@ -2,6 +2,7 @@ package ch.so.agi.pprint.webservice;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -10,6 +11,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +28,7 @@ import ch.so.agi.pprint.PrettyPrint;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
-public class PprintController {
+public class PrettyPrintController {
     private Logger log = LoggerFactory.getLogger(this.getClass());
     
     private static final String UML_FLAVOR_PLANTUML = "plantuml";
@@ -93,17 +95,26 @@ public class PprintController {
             file.transferTo(iliFile);
             
             Path outDir = Files.createTempDirectory("uml_output_");
-            boolean ret = PrettyPrint.run(new File[] {iliFile.toFile()}, outDir, ilidirs, null);          
+            boolean ret = PrettyPrint.run(new File[] {iliFile.toFile()}, outDir, ilidirs, file.getOriginalFilename() + ".png");          
                        
             String iliPrettyPrinted = Files.readString(Paths.get(outDir.toString(), iliFile.getFileName().toString()));
-           
+                       
+            byte[] imageBytes;
+            
+            try (InputStream in = Files.newInputStream(outDir.resolve(file.getOriginalFilename() + ".png"))) {
+                imageBytes = in.readAllBytes();
+            }
+
             FileSystemUtils.deleteRecursively(inDir);
             FileSystemUtils.deleteRecursively(outDir);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.IMAGE_PNG);
             
             if (ret) {
-                return ResponseEntity.ok(iliPrettyPrinted);
+                return new ResponseEntity<>(imageBytes, headers, HttpStatus.OK);
             } else {
-                return ResponseEntity.internalServerError().body("error while converting ili file");
+                return ResponseEntity.internalServerError().body("error while creating uml diagram");
             }
         } catch (IOException e) {
             e.printStackTrace();
