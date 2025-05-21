@@ -181,6 +181,7 @@ VERSION "2025-04-22"  =
     END Bauprojekt;
 
     TOPIC Geschaefte =
+
       /** Elektronische Baugesuchsgeschäfte
        */
        CLASS Geschaeft =

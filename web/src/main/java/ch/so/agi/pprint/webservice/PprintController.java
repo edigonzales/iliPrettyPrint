@@ -18,6 +18,7 @@ import org.springframework.util.FileSystemUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,6 +28,8 @@ import jakarta.servlet.http.HttpServletRequest;
 @Controller
 public class PprintController {
     private Logger log = LoggerFactory.getLogger(this.getClass());
+    
+    private static final String UML_FLAVOR_PLANTUML = "plantuml";
 
     @Value("${app.ilidirs}")
     private String ilidirs;
@@ -73,4 +76,39 @@ public class PprintController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+    
+    @PostMapping(value = "/api/uml", consumes = {"multipart/form-data"}, produces = MediaType.TEXT_PLAIN_VALUE)
+    public ResponseEntity<?> uml(@RequestPart(name = "file", required = true) MultipartFile file, @RequestPart(name = "flavor", required = false) String flavor) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body("Please select a file to upload.");
+        }
+        
+        if (flavor == null) {
+            flavor = UML_FLAVOR_PLANTUML;
+        }
+        
+        try {
+            Path inDir = Files.createTempDirectory("uml_input_");
+            Path iliFile = inDir.resolve(file.getOriginalFilename());
+            file.transferTo(iliFile);
+            
+            Path outDir = Files.createTempDirectory("uml_output_");
+            boolean ret = PrettyPrint.run(new File[] {iliFile.toFile()}, outDir, ilidirs, null);          
+                       
+            String iliPrettyPrinted = Files.readString(Paths.get(outDir.toString(), iliFile.getFileName().toString()));
+           
+            FileSystemUtils.deleteRecursively(inDir);
+            FileSystemUtils.deleteRecursively(outDir);
+            
+            if (ret) {
+                return ResponseEntity.ok(iliPrettyPrinted);
+            } else {
+                return ResponseEntity.internalServerError().body("error while converting ili file");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
 }
