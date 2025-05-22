@@ -96,11 +96,8 @@ public class PrettyPrintController {
             
             Path outDir = Files.createTempDirectory("uml_output_");
             boolean ret = PrettyPrint.run(new File[] {iliFile.toFile()}, outDir, ilidirs, file.getOriginalFilename() + ".png");          
-                       
-            String iliPrettyPrinted = Files.readString(Paths.get(outDir.toString(), iliFile.getFileName().toString()));
-                       
-            byte[] imageBytes;
-            
+                                              
+            byte[] imageBytes;            
             try (InputStream in = Files.newInputStream(outDir.resolve(file.getOriginalFilename() + ".png"))) {
                 imageBytes = in.readAllBytes();
             }
