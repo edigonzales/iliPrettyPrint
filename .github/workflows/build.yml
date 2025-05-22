@@ -38,7 +38,7 @@ jobs:
         if: always() && (steps.build.outcome == 'failure')
         with:
           name: reports
-          path: **/build/reports/tests/
+          path: '**/build/reports/tests/'
 
       - name: Decode
         if: always() && (steps.build.outcome == 'success')
