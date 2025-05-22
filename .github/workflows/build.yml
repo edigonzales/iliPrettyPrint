@@ -27,7 +27,7 @@ jobs:
       - name: Build application with Gradle
         #if: ${{ success() && github.ref != 'refs/heads/main'}}
         id: buildApp
-        run: ./gradlew clean app:build app:sourcesJar app:javadocJar 
+        run: ./gradlew clean app:build app:sourcesJar app:javadocJar web:build web:sourcesJar web:javadocJar
 
       - name: Debug 1
         run: |

@@ -1,9 +1,13 @@
 plugins {
 	id 'java'
 	id 'war'
+    id 'maven-publish'
+    id 'signing'
 	id 'org.springframework.boot' version '3.4.5'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
+
+group = 'io.github.sogis'
 
 def myArtifactId = "iliprettyprint-web-service"
 
@@ -24,3 +28,57 @@ tasks.named('test') {
 
 project.archivesBaseName = myArtifactId
 
+task sourcesJar(type: Jar, dependsOn: classes) {
+    archiveClassifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+javadoc.failOnError = false
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    archiveClassifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.web
+            artifact jar
+            artifact sourcesJar
+            artifact javadocJar
+
+            groupId = "io.github.sogis"
+            artifactId = myArtifactId
+            
+            pom {
+                name = "iliprettyprint"
+                url = "https://github.com/edigonzales/iliPrettyPrint"
+                description = "INTERLIS pretty printer"
+                scm {
+                    connection = "scm:git:https@github.com/edigonzales/iliPrettyPrint"
+                    developerConnection = "scm:git:https@github.com/edigonzales/iliPrettyPrint"
+                    url = "https://github.com/edigonzales/iliPrettyPrint"
+                }
+                licenses {
+                    license {
+                        name = "MIT"
+                        url = "https://github.com/edigonzales/iliPrettyPrint/blob/master/LICENSE"
+                    }
+                }
+                developers {
+                    developer {
+                        id = "edigonzales"
+                        name = "Stefan Ziegler"
+                    }
+                }
+            }
+        }
+    }
+}
+
+//if (System.getProperty('release') != null) {
+if (true) {
+    signing {
+        sign publishing.publications.mavenJava
+    }
+}
