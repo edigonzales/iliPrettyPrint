@@ -15,3 +15,7 @@
 ```
 curl -v -X POST -F "file=@app/src/test/data/SO_ARP_SEin_Konfiguration_20250115.ili" http://localhost:8080/api/prettyprint 
 ```
+
+## links
+
+- Sonatype staging repos: https://s01.oss.sonatype.org/#stagingRepositories
