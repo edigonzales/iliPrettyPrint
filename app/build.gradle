@@ -89,6 +89,8 @@ publishing {
             from components.java
             artifact sourcesJar
             artifact javadocJar
+            groupId = group
+            artifactId = myArtifactId
 
             pom {
                 name = "iliprettyprint"
