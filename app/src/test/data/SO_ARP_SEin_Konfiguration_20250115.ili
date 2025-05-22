@@ -87,7 +87,7 @@ END MyBase;
     Link : URI;
   END Objektinfo;
 
-  TOPIC Auswertung =
+  TOPIC Auswertung = 
 
     STRUCTURE Thema
     EXTENDS SO_ARP_SEin_Konfiguration_20250115.Thema =
@@ -98,7 +98,7 @@ END MyBase;
       /** Ist Gemeinde von diesem Thema betroffen?
        */
       ist_betroffen : BOOLEAN;
-    END Thema;
+    END Thema; 
 
     STRUCTURE Gruppe
     EXTENDS SO_ARP_SEin_Konfiguration_20250115.Gruppe =
