@@ -20,8 +20,6 @@ allprojects {
     }
 }
 
-group = 'io.github.sogis'
-
 nexusPublishing {
     repositories {
         sonatype { 

@@ -6,6 +6,8 @@ plugins {
     id 'org.jreleaser' version '1.17.0'
 }
 
+group = 'io.github.sogis'
+
 def myArtifactId = "iliprettyprint"
 
 dependencies {
@@ -89,7 +91,7 @@ publishing {
             from components.java
             artifact sourcesJar
             artifact javadocJar
-            groupId = group
+            groupId = "io.github.sogis"
             artifactId = myArtifactId
 
             pom {
