@@ -20,6 +20,8 @@ import ch.interlis.ili2c.generator.nls.ModelElements;
 import ch.interlis.ili2c.metamodel.TransferDescription;
 
 public class PrettyPrint {
+    
+    // UmlModel model kapseln. Dann verschiedene Public-Methoden für Output. 
 
     public static boolean run(File iliFiles[], Path outputDir, String modeldir, String plantumlFileName) {
         Configuration config = new Configuration();
