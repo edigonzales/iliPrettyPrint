@@ -16,6 +16,9 @@ import picocli.CommandLine.Option;
         )
 public class App implements Callable<Integer> {
 
+    // TODO: eher das Tools als InterlisUmlUtilities benennen mit Subcommands?
+    
+    
     @Option(names = "--ili", description = "Path to the input ILI file", required = true)
     private Path iliFile;
 
@@ -25,20 +28,20 @@ public class App implements Callable<Integer> {
     @Option(names = "--modeldir", description = "List of directories/repositories", paramLabel = "<modeldir>", required = false)
     private String modeldir;
 
-    @Option(names = "--plantuml", description = "Create PlantUML diagram", paramLabel = "<umlFileName>", required = false)
-    private String plantumlFileName;
+//    @Option(names = "--plantuml", description = "Create PlantUML diagram", paramLabel = "<umlFileName>", required = false)
+//    private String plantumlFileName;
     
     @Override
     public Integer call() {
         System.out.println("ILI file: " + iliFile.toAbsolutePath());
         System.out.println("Output file: " + outputDir.toAbsolutePath());
         System.out.println("Model dir: " + modeldir);
-        System.out.println("plantumlFileName: " + plantumlFileName);
+//        System.out.println("plantumlFileName: " + plantumlFileName);
         
         if (outputDir == null) {
             outputDir = iliFile.getParent();
         }
-        boolean ret = PrettyPrint.run(new File[] {iliFile.toFile()}, outputDir, modeldir, plantumlFileName);
+        boolean ret = PrettyPrint.run(new File[] {iliFile.toFile()}, outputDir, modeldir);
         return ret ? 0 : 1;        
     }
 

@@ -59,12 +59,10 @@ import ch.ehi.uml1_4.modelmanagement.Model;
 import ch.interlis.ili2c.generator.nls.ElementType;
 import net.sourceforge.plantuml.FileFormat;
 import net.sourceforge.plantuml.FileFormatOption;
-import net.sourceforge.plantuml.GeneratedImage;
-import net.sourceforge.plantuml.SourceFileReader;
 import net.sourceforge.plantuml.SourceStringReader;
 import ch.ehi.basics.settings.Settings;
 
-public class TransferToPlantUml {
+public class TransferToPlantUml implements TransferToUml {
 
     private PrintWriter writer;
     private Map<String, String> classNameMap = new HashMap<>();
@@ -82,10 +80,6 @@ public class TransferToPlantUml {
     
     // Konfigmöglichkeiten
     // - qualifiedNames (wegen Strukturen etc.)
-
-    public TransferToPlantUml() {
-        
-    }
     
     /**
      * Exports a model to a PlantUML file
@@ -625,13 +619,5 @@ public class TransferToPlantUml {
             return fileName.substring(0, dotIndex);
         }
         return fileName;
-    }
-    
-    public static final String SHOW_ATTRIBUTES = "ch.so.agi.interlis.uml.showAttributes";
-    
-    public static final String SHOW_ATTRIBUTE_TYPES = "ch.so.agi.interlis.uml.showAttributeTypes";
-    
-    public static final String SHOW_CARDINALITIES_OF_ATTRIBUTES = "ch.so.agi.interlis.uml.showCardinalitiesOfAttributes";
-    
-    public static final String SHOW_CARDINALITIES = "ch.so.agi.interlis.uml.showCardinalities";
+    }    
 }
