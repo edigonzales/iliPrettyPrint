@@ -61,8 +61,7 @@ public class MainController {
             file.transferTo(iliFile);
             
             Path outDir = Files.createTempDirectory("pprint_output_");
-            UmlModel model = UmlEditorUtility.iliimport(new File[] {iliFile.toFile()}, ilidirs);
-            boolean ret = UmlEditorUtility.prettyPrint(outDir, model);
+            boolean ret = UmlEditorUtility.prettyPrint(new File[] {iliFile.toFile()}, ilidirs, outDir);
                                    
             String iliPrettyPrinted = Files.readString(Paths.get(outDir.toString(), iliFile.getFileName().toString()));
            

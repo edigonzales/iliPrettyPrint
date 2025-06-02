@@ -18,6 +18,11 @@ import ch.interlis.ili2c.metamodel.TransferDescription;
 
 public class UmlEditorUtility {
     
+    
+    // TODO: beschränken auf eine Datei. Dann kann ich auch immer den Namen davon ableiten.
+    // Für meinen Anwendungsfall sollte das i.O. sein.
+    
+
     private static UmlModel iliimport(File iliFiles[], String modeldir) {
         Configuration config = new Configuration();
         for (int filei = 0; filei < iliFiles.length; filei++) {
