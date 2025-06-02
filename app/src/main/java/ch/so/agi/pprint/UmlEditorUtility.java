@@ -18,7 +18,7 @@ import ch.interlis.ili2c.metamodel.TransferDescription;
 
 public class UmlEditorUtility {
     
-    public static UmlModel iliimport(File iliFiles[], String modeldir) {
+    private static UmlModel iliimport(File iliFiles[], String modeldir) {
         Configuration config = new Configuration();
         for (int filei = 0; filei < iliFiles.length; filei++) {
             config.addFileEntry(new FileEntry(iliFiles[filei].getAbsolutePath(),
@@ -49,7 +49,12 @@ public class UmlEditorUtility {
         return null;
     }
     
-    public static boolean iliexport(Path outputDir, UmlModel model) {
+    public static boolean prettyPrint(File iliFiles[], String modeldir, Path outputDir) {
+        UmlModel model = UmlEditorUtility.iliimport(iliFiles, modeldir);
+        if (model == null) {
+            return false;
+        }
+
         TransferFromUmlMetamodel writer = new TransferFromUmlMetamodel(outputDir);
         Iterator<UmlModel> modelI = model.iteratorOwnedElement();
         while (modelI.hasNext()) {
@@ -86,7 +91,8 @@ public class UmlEditorUtility {
         return true;
     }
     
-    public static boolean umlexport(Path outputDir, String umlFileName, UmlModel model, UmlDiagramVendor vendor) {
+    public static boolean createUmlDiagram(File iliFiles[], String modeldir, Path outputDir, String umlFileName, UmlDiagramVendor vendor) {
+        UmlModel model = UmlEditorUtility.iliimport(iliFiles, modeldir);
         TransferToUml transferToUml = UmlDiagramGeneratorFactory.getGenerator(vendor);
         try {
             ch.ehi.basics.settings.Settings settings = new ch.ehi.basics.settings.Settings();

@@ -10,7 +10,7 @@ public class UmlDiagramGeneratorFactory {
             case MERMAID:
                 return new TransferToPlantUml();
             case PLANTUML:
-                return new TransferToPlantUml();
+                return new TransferToMermaid();
             default:
                 throw new IllegalArgumentException("Unknown UML diagram vendor: " + vendor);
         }

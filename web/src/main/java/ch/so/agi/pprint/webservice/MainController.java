@@ -34,8 +34,6 @@ import jakarta.servlet.http.HttpServletRequest;
 @Controller
 public class MainController {
     private Logger log = LoggerFactory.getLogger(this.getClass());
-    
-    private static final String UML_FLAVOR_PLANTUML = "plantuml";
 
     @Value("${app.ilidirs}")
     private String ilidirs;
@@ -64,12 +62,11 @@ public class MainController {
             
             Path outDir = Files.createTempDirectory("pprint_output_");
             UmlModel model = UmlEditorUtility.iliimport(new File[] {iliFile.toFile()}, ilidirs);
-            boolean ret = UmlEditorUtility.iliexport(outDir, model);
+            boolean ret = UmlEditorUtility.prettyPrint(outDir, model);
                                    
             String iliPrettyPrinted = Files.readString(Paths.get(outDir.toString(), iliFile.getFileName().toString()));
            
-            FileSystemUtils.deleteRecursively(inDir);
-            FileSystemUtils.deleteRecursively(outDir);
+            deleteTemporaryFiles(inDir, outDir);
             
             if (ret) {
                 return ResponseEntity.ok(iliPrettyPrinted);
@@ -100,7 +97,7 @@ public class MainController {
             
             Path outDir = Files.createTempDirectory("uml_output_");
             UmlModel model = UmlEditorUtility.iliimport(new File[] {iliFile.toFile()}, ilidirs);
-            boolean ret = UmlEditorUtility.umlexport(outDir, file.getOriginalFilename() + ".png", model, vendorEnum);
+            boolean ret = UmlEditorUtility.createUmlDiagram(outDir, file.getOriginalFilename(), model, vendorEnum);
             if (!ret) {
                 return ResponseEntity.internalServerError().body("error while creating uml diagram");   
             }
@@ -114,11 +111,10 @@ public class MainController {
                     imageBytes = in.readAllBytes();
                 }
 
-                FileSystemUtils.deleteRecursively(inDir);
-                FileSystemUtils.deleteRecursively(outDir);
+                deleteTemporaryFiles(inDir, outDir);
 
                 HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.IMAGE_PNG);
+                headers.setContentType(MediaType.TEXT_PLAIN);
 
                 return new ResponseEntity<>(imageBytes, headers, HttpStatus.OK);
             } else {
@@ -126,9 +122,8 @@ public class MainController {
                 try (InputStream in = Files.newInputStream(outDir.resolve(file.getOriginalFilename() + ".png"))) {
                     imageBytes = in.readAllBytes();
                 }
-
-                FileSystemUtils.deleteRecursively(inDir);
-                FileSystemUtils.deleteRecursively(outDir);
+                
+                deleteTemporaryFiles(inDir, outDir);
 
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.IMAGE_PNG);
@@ -141,4 +136,9 @@ public class MainController {
         }
     }
 
+    private void deleteTemporaryFiles(Path...dirs) throws IOException {
+        for (Path dir : dirs) {
+            FileSystemUtils.deleteRecursively(dir);            
+        }
+    }
 }
