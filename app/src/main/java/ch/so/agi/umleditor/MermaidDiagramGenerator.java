@@ -1,11 +1,9 @@
 package ch.so.agi.umleditor;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -15,7 +13,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.io.OutputStream; 
 
 import ch.ehi.interlis.associations.AssociationDef;
 import ch.ehi.interlis.associations.RoleDef;
@@ -56,9 +53,6 @@ import ch.ehi.uml1_4.implementation.AbstractModelElement;
 import ch.ehi.uml1_4.implementation.UmlMultiplicityRange;
 import ch.ehi.uml1_4.modelmanagement.Model;
 import ch.interlis.ili2c.generator.nls.ElementType;
-import net.sourceforge.plantuml.FileFormat;
-import net.sourceforge.plantuml.FileFormatOption;
-import net.sourceforge.plantuml.SourceStringReader;
 import ch.ehi.basics.settings.Settings;
 
 public class MermaidDiagramGenerator implements DiagramGenerator {
@@ -133,9 +127,10 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
                 writer.println(inheritance);
             }
             
-            writer.println("classDef aclass fill:#EEEEEE,stroke:#999999,stroke-width:2px,color:#000;");
-            writer.println("classDef aenumeration fill:#EEEEEE,stroke:#999999,stroke-width:2px,color:#000;");
-            writer.println("classDef astructure fill:#EEEEEE,stroke:#999999,stroke-width:2px,color:#000,stroke-dasharray: 6 6;");
+            // Funktioniert nicht, falls embedded in HTML.
+//            writer.println("classDef aclass fill:#EEEEEE,stroke:#999999,stroke-width:2px,color:#000;");
+//            writer.println("classDef aenumeration fill:#EEEEEE,stroke:#999999,stroke-width:2px,color:#000;");
+//            writer.println("classDef astructure fill:#EEEEEE,stroke:#999999,stroke-width:2px,color:#000,stroke-dasharray: 6 6;");
             
             // End Mermaid diagram
             writer.close();
@@ -229,7 +224,10 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
                     String oid = classDef.getOid();
                     writer.println("    class c" + oid + "[\""+ elementName +"\"]:::"+type+" {");
                     if (classDef.isAbstract()) {
-                        writer.println("      <<abstract>>");
+                        writer.println("      &lt;&lt;abstract&gt;&gt;");
+                    }
+                    if (elementType.equals(ElementType.STRUCTURE)) {
+                        writer.println("      &lt;&lt;Structure&gt;&gt;");
                     }
 
                     // Handle inheritance
@@ -245,7 +243,7 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
                     DomainDef domainDef = (DomainDef) modelDef;
                     if (domainDef.getType() instanceof Enumeration) {
                         writer.println("    class e" + domainDef.getOid() + "[\""+ elementName +"\"]:::aenumeration {");
-                        writer.println("      <<Enumeration>>");
+                        writer.println("      &lt;&lt;Enumeration&gt;&gt;");
                     }                    
                 default:
                     // Other element types not directly represented in class diagram
@@ -331,7 +329,7 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
 //                    writer.println();
 //                    break;
                 case ElementType.DOMAIN:
-                    writer.println("  }");
+                    writer.println("    }");
                     writer.println();
                     break;
                 case ElementType.TOPIC:
@@ -369,7 +367,7 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
             
         }
                         
-        inheritanceList.add("c" + parentClassOid + " <|-- c" + childClassOid);
+        inheritanceList.add("c" + parentClassOid + " &lt;|-- c" + childClassOid);
     }
     
     private void processAssociation(AssociationDef assocDef, String baselanguage) {
