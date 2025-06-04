@@ -61,7 +61,7 @@ public class UmlEditorUtility {
         return null;
     }
     
-    public static boolean prettyPrint(Path iliFile, String modeldir, Path outputDir) {
+    public static synchronized boolean prettyPrint(Path iliFile, String modeldir, Path outputDir) {
         UmlModel model = UmlEditorUtility.iliimport(iliFile, modeldir);
         if (model == null) {
             return false;
@@ -103,7 +103,7 @@ public class UmlEditorUtility {
         return true;
     }
     
-    public static Path createUmlDiagram(Path iliFile, String modeldir, Path outputDir, UmlDiagramVendor vendor) {
+    public static synchronized Path createUmlDiagram(Path iliFile, String modeldir, Path outputDir, UmlDiagramVendor vendor) {
         UmlModel model = UmlEditorUtility.iliimport(iliFile, modeldir);
         DiagramGenerator diagramGenerator = DiagramGeneratorFactory.getGenerator(vendor);
         try {
