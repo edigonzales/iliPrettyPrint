@@ -1,13 +1,13 @@
-package ch.so.agi.pprint.webservice;
+package ch.so.agi.umleditor.webservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class IliprettyprintWebServiceApplication {
+public class UmlEditorWebServiceApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(IliprettyprintWebServiceApplication.class, args);
+		SpringApplication.run(UmlEditorWebServiceApplication.class, args);
 	}
 
 }

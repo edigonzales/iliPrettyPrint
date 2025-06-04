@@ -1,4 +1,4 @@
-package ch.so.agi.pprint;
+package ch.so.agi.umleditor;
 
 /* This file is part of the UML/INTERLIS-Editor.
  * For more information, please see <http://www.umleditor.org/>.

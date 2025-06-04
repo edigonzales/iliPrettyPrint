@@ -1,4 +1,4 @@
-package ch.so.agi.pprint;
+package ch.so.agi.umleditor;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -61,12 +61,13 @@ import net.sourceforge.plantuml.FileFormatOption;
 import net.sourceforge.plantuml.SourceStringReader;
 import ch.ehi.basics.settings.Settings;
 
-public class TransferToPlantUml implements TransferToUml {
+public class MermaidDiagramGenerator implements DiagramGenerator {
 
     private PrintWriter writer;
     private Map<String, String> classNameMap = new HashMap<>();
     private Set<String> processedAssociations = new HashSet<>();
     private List<String> inheritanceList = new ArrayList<>();
+    private List<String> associationList = new ArrayList<>();
     private String language;
     private Settings settings;
     private boolean showAttributes = false;
@@ -87,27 +88,23 @@ public class TransferToPlantUml implements TransferToUml {
      * @param plantUmlFile path of the destination file
      * @throws Exception Exception
      */
-    public void export(Model model, Path plantUmlFile, Settings settings) throws Exception {
+    public Path export(Model model, Path outputDir, Settings settings) throws Exception {
         this.settings = settings;
-        showAttributes = Boolean.valueOf(settings.getValue(TransferToPlantUml.SHOW_ATTRIBUTES));
-        showAttributeTypes = Boolean.valueOf(settings.getValue(TransferToPlantUml.SHOW_ATTRIBUTE_TYPES));
-        showCardinalitiesOfAttributes = Boolean.valueOf(settings.getValue(TransferToPlantUml.SHOW_CARDINALITIES_OF_ATTRIBUTES));
-        showCardinalities = Boolean.valueOf(settings.getValue(TransferToPlantUml.SHOW_CARDINALITIES));
+        showAttributes = Boolean.valueOf(settings.getValue(PlantUMLDiagramGenerator.SHOW_ATTRIBUTES));
+        showAttributeTypes = Boolean.valueOf(settings.getValue(PlantUMLDiagramGenerator.SHOW_ATTRIBUTE_TYPES));
+        showCardinalitiesOfAttributes = Boolean.valueOf(settings.getValue(PlantUMLDiagramGenerator.SHOW_CARDINALITIES_OF_ATTRIBUTES));
+        showCardinalities = Boolean.valueOf(settings.getValue(PlantUMLDiagramGenerator.SHOW_CARDINALITIES));
         
         try {
-            File pumlFile = Paths.get(plantUmlFile.getParent().toString(), getFileNameWithoutExtension(plantUmlFile.getFileName().toString()) + ".puml").toFile();
+            File mermaidFile = outputDir.resolve(model.getDefLangName() + ".mmd").toFile();
             
-            writer = new PrintWriter(new FileWriter(pumlFile));
+            writer = new PrintWriter(new FileWriter(mermaidFile));
             
-            // Start PlantUML diagram
-            writer.println("@startuml");
-            writer.println("' INTERLIS model uml diagram");
-            writer.println("skinparam packageStyle rectangle");
-            writer.println("skinparam classAttributeIconSize 0");
-            writer.println("skinparam monochrome false");
-            writer.println("skinparam shadowing false");
-            writer.println("!pragma layout smetana");
-            writer.println();
+            // Start Mermaid diagram
+            writer.println("---");
+            writer.println("title: " + model.getDefLangName());
+            writer.println("---");
+            writer.println("classDiagram");
             
             // Process model elements
             Iterator modelI = model.iteratorOwnedElement();
@@ -127,30 +124,22 @@ public class TransferToPlantUml implements TransferToUml {
                     }
                 }
             }
-            
-            // End PlantUML diagram
-            writer.println("@enduml");
-            writer.close();
-            
-//            File outputDir = new File("path/to/output/folder"); // Define your desired output path
-//            SourceFileReader reader = new SourceFileReader(source, outputDir);
-            
-//            SourceFileReader reader = new SourceFileReader(pumlFile);
-//            List<GeneratedImage> list = reader.getGeneratedImages();
-//            System.out.println("Image created: " + list.get(0).getPngFile());
-            
-            String plantUmlString = Files.readString(pumlFile.toPath());
-            try (OutputStream os = new FileOutputStream(plantUmlFile.toFile())) {
-                SourceStringReader sreader = new SourceStringReader(plantUmlString);
-                if (plantUmlFile.toString().toLowerCase().endsWith("png")) {
-                    sreader.generateImage(os, new FileFormatOption(FileFormat.PNG));                     
-                } else if (plantUmlFile.toString().toLowerCase().endsWith("pdf")) {
-                    sreader.generateImage(os, new FileFormatOption(FileFormat.PDF));                                         
-                } else {
-                    throw new IOException("not supported file format");
-                }
+
+            for (String association : associationList) {
+                writer.println(association);
+            }
+
+            for (String inheritance : inheritanceList) {
+                writer.println(inheritance);
             }
             
+            writer.println("classDef aclass fill:#EEEEEE,stroke:#999999,stroke-width:2px,color:#000;");
+            writer.println("classDef aenumeration fill:#EEEEEE,stroke:#999999,stroke-width:2px,color:#000;");
+            writer.println("classDef astructure fill:#EEEEEE,stroke:#999999,stroke-width:2px,color:#000,stroke-dasharray: 6 6;");
+            
+            // End Mermaid diagram
+            writer.close();
+            return mermaidFile.toPath();
         } catch (IOException e) {
             throw e;
         }
@@ -225,20 +214,23 @@ public class TransferToPlantUml implements TransferToUml {
         // Process according to element type
         if (elementType != null) {
             switch (elementType) {
-                case ElementType.MODEL:
-                    writer.println("package \"" + elementName + "\" {");
-                    break;
+//                case ElementType.MODEL:
+//                    writer.println("namespace " + elementName + " {");
+//                    break;
                     
                 case ElementType.TOPIC:
-                    writer.println("package \"" + elementName + "\" {");
+                    writer.println("  namespace " + elementName + " {");
                     break;
                     
                 case ElementType.STRUCTURE:
                 case ElementType.CLASS:                                  
-                    String type = elementType.equals(ElementType.STRUCTURE) ? "struct" : "class";
+                    String type = elementType.equals(ElementType.STRUCTURE) ? "astructure" : "aclass";
                     ClassDef classDef = (ClassDef) modelDef;
                     String oid = classDef.getOid();
-                    writer.println((classDef.isAbstract() ? "abstract " : "") + type +" \"" + elementName + "\" as c"+oid+" {");
+                    writer.println("    class c" + oid + "[\""+ elementName +"\"]:::"+type+" {");
+                    if (classDef.isAbstract()) {
+                        writer.println("      <<abstract>>");
+                    }
 
                     // Handle inheritance
                     handleInheritance(classDef, baselanguage);
@@ -252,8 +244,8 @@ public class TransferToPlantUml implements TransferToUml {
                 case ElementType.DOMAIN:                    
                     DomainDef domainDef = (DomainDef) modelDef;
                     if (domainDef.getType() instanceof Enumeration) {
-                        writer.println("enum" + " \"" + domainDef.getDefLangName() + "\" as e" + domainDef.getOid() + " {"); 
-
+                        writer.println("    class e" + domainDef.getOid() + "[\""+ elementName +"\"]:::aenumeration {");
+                        writer.println("      <<Enumeration>>");
                     }                    
                 default:
                     // Other element types not directly represented in class diagram
@@ -281,7 +273,7 @@ public class TransferToPlantUml implements TransferToUml {
                     }
 
                     if (showAttributes) {
-                        writer.println("  " + attrName + " " + (showCardinalitiesOfAttributes ? multiplicityString : "") + (showAttributeTypes ?  " : " + attrType : ""));                        
+                        writer.println("      " + attrName + " " + (showCardinalitiesOfAttributes ? multiplicityString : "") + (showAttributeTypes ?  " : " + attrType : ""));
                     }
                     
                     // Process enum attributes if needed
@@ -326,7 +318,6 @@ public class TransferToPlantUml implements TransferToUml {
 
             while (childIt.hasNext()) {
                 ModelElement childElement = (ModelElement) childIt.next();
-                //System.out.println(childElement.getDefLangName());
                 visitModelElement(childElement, fullScopedName, baselanguage, languages);
             }
             
@@ -335,17 +326,21 @@ public class TransferToPlantUml implements TransferToUml {
         // Close any opened blocks
         if (elementType != null) {
             switch (elementType) {
-                case ElementType.MODEL:
-                case ElementType.DOMAIN:    
+//                case ElementType.MODEL:
+//                    writer.println("}");
+//                    writer.println();
+//                    break;
+                case ElementType.DOMAIN:
+                    writer.println("  }");
+                    writer.println();
+                    break;
                 case ElementType.TOPIC:
+                    writer.println("  }");
+                    writer.println();
+                    break;
                 case ElementType.CLASS:
                 case ElementType.STRUCTURE:
-                    if (elementType.equals(ElementType.MODEL)) {
-                        for (String inheritance : inheritanceList) {
-                            writer.println(inheritance);
-                        }
-                    }
-                    writer.println("}");
+                    writer.println("    }");
                     writer.println();
                     break;
             }
@@ -466,8 +461,7 @@ public class TransferToPlantUml implements TransferToUml {
 //                }
 //            }
             
-            writer.println(relationBuilder.toString());
-            writer.println();
+            associationList.add(relationBuilder.toString());
         }
     }
 

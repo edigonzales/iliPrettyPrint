@@ -1,4 +1,4 @@
-package ch.so.agi.pprint.webservice;
+package ch.so.agi.umleditor.webservice;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,10 +25,10 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
 import ch.ehi.uml1_4.implementation.UmlModel;
-import ch.so.agi.pprint.PrettyPrint;
-import ch.so.agi.pprint.TransferToPlantUml;
-import ch.so.agi.pprint.UmlDiagramVendor;
-import ch.so.agi.pprint.UmlEditorUtility;
+import ch.so.agi.umleditor.PlantUMLDiagramGenerator;
+import ch.so.agi.umleditor.PrettyPrint;
+import ch.so.agi.umleditor.UmlDiagramVendor;
+import ch.so.agi.umleditor.UmlEditorUtility;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
@@ -61,7 +61,7 @@ public class MainController {
             file.transferTo(iliFile);
             
             Path outDir = Files.createTempDirectory("pprint_output_");
-            boolean ret = UmlEditorUtility.prettyPrint(new File[] {iliFile.toFile()}, ilidirs, outDir);
+            boolean ret = UmlEditorUtility.prettyPrint(iliFile, ilidirs, outDir);
                                    
             String iliPrettyPrinted = Files.readString(Paths.get(outDir.toString(), iliFile.getFileName().toString()));
            
@@ -79,14 +79,14 @@ public class MainController {
     }
     
     @PostMapping(value = "/api/uml", consumes = {"multipart/form-data"})
-    public ResponseEntity<?> uml(@RequestPart(name = "file", required = true) MultipartFile file, @RequestPart(name = "vendor", required = false) String vendor) {
+    public ResponseEntity<?> uml(@RequestPart(name = "file", required = true) MultipartFile file, @RequestPart(name = "vendor", required = false) String vendorParam) {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body("Please select a file to upload.");
         }
         
-        UmlDiagramVendor vendorEnum = UmlDiagramVendor.PLANTUML;
-        if (vendor != null) {
-            vendorEnum = UmlDiagramVendor.valueOf(vendor);
+        UmlDiagramVendor vendor = UmlDiagramVendor.PLANTUML;
+        if (vendorParam != null) {
+            vendor = UmlDiagramVendor.valueOf(vendorParam);
         }
                         
         try {
@@ -94,31 +94,23 @@ public class MainController {
             Path iliFile = inDir.resolve(file.getOriginalFilename());
             file.transferTo(iliFile);
             
-            Path outDir = Files.createTempDirectory("uml_output_");
-            UmlModel model = UmlEditorUtility.iliimport(new File[] {iliFile.toFile()}, ilidirs);
-            boolean ret = UmlEditorUtility.createUmlDiagram(outDir, file.getOriginalFilename(), model, vendorEnum);
-            if (!ret) {
+            Path outDir = Files.createTempDirectory("uml_output_");            
+            Path umlFile = UmlEditorUtility.createUmlDiagram(iliFile, ilidirs, outDir, vendor);
+            if (umlFile == null) {
                 return ResponseEntity.internalServerError().body("error while creating uml diagram");   
-            }
-                                              
-            if (vendorEnum.equals(UmlDiagramVendor.MERMAID)) {
-                
-                // FIXME 
-                
-                byte[] imageBytes;
-                try (InputStream in = Files.newInputStream(outDir.resolve(file.getOriginalFilename() + ".png"))) {
-                    imageBytes = in.readAllBytes();
-                }
+            }                
+
+            if (vendor.equals(UmlDiagramVendor.MERMAID)) {
+                String mermaidFileContent = Files.readString(umlFile);
 
                 deleteTemporaryFiles(inDir, outDir);
 
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.TEXT_PLAIN);
-
-                return new ResponseEntity<>(imageBytes, headers, HttpStatus.OK);
+                return new ResponseEntity<>(mermaidFileContent, headers, HttpStatus.OK);
             } else {
                 byte[] imageBytes;
-                try (InputStream in = Files.newInputStream(outDir.resolve(file.getOriginalFilename() + ".png"))) {
+                try (InputStream in = Files.newInputStream(umlFile)) {
                     imageBytes = in.readAllBytes();
                 }
                 
@@ -126,7 +118,6 @@ public class MainController {
 
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.IMAGE_PNG);
-
                 return new ResponseEntity<>(imageBytes, headers, HttpStatus.OK);
             }
         } catch (IOException e) {

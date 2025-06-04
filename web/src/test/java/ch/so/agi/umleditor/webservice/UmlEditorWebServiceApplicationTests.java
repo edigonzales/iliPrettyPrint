@@ -1,10 +1,10 @@
-package ch.so.agi.pprint.webservice;
+package ch.so.agi.umleditor.webservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class IliprettyprintWebServiceApplicationTests {
+class UmlEditorWebServiceApplicationTests {
 
 	@Test
 	void contextLoads() {

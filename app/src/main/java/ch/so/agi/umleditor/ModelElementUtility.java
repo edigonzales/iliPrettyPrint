@@ -1,4 +1,4 @@
-package ch.so.agi.pprint;
+package ch.so.agi.umleditor;
 
 import java.util.Iterator;
 

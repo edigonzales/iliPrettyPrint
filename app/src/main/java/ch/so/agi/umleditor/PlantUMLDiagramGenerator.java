@@ -1,4 +1,4 @@
-package ch.so.agi.pprint;
+package ch.so.agi.umleditor;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -61,7 +61,7 @@ import net.sourceforge.plantuml.FileFormatOption;
 import net.sourceforge.plantuml.SourceStringReader;
 import ch.ehi.basics.settings.Settings;
 
-public class TransferToMermaid implements TransferToUml {
+public class PlantUMLDiagramGenerator implements DiagramGenerator {
 
     private PrintWriter writer;
     private Map<String, String> classNameMap = new HashMap<>();
@@ -87,15 +87,16 @@ public class TransferToMermaid implements TransferToUml {
      * @param plantUmlFile path of the destination file
      * @throws Exception Exception
      */
-    public void export(Model model, Path plantUmlFile, Settings settings) throws Exception {
+    public Path export(Model model, Path outputDir, Settings settings) throws Exception {
         this.settings = settings;
-        showAttributes = Boolean.valueOf(settings.getValue(TransferToMermaid.SHOW_ATTRIBUTES));
-        showAttributeTypes = Boolean.valueOf(settings.getValue(TransferToMermaid.SHOW_ATTRIBUTE_TYPES));
-        showCardinalitiesOfAttributes = Boolean.valueOf(settings.getValue(TransferToMermaid.SHOW_CARDINALITIES_OF_ATTRIBUTES));
-        showCardinalities = Boolean.valueOf(settings.getValue(TransferToMermaid.SHOW_CARDINALITIES));
+        showAttributes = Boolean.valueOf(settings.getValue(PlantUMLDiagramGenerator.SHOW_ATTRIBUTES));
+        showAttributeTypes = Boolean.valueOf(settings.getValue(PlantUMLDiagramGenerator.SHOW_ATTRIBUTE_TYPES));
+        showCardinalitiesOfAttributes = Boolean.valueOf(settings.getValue(PlantUMLDiagramGenerator.SHOW_CARDINALITIES_OF_ATTRIBUTES));
+        showCardinalities = Boolean.valueOf(settings.getValue(PlantUMLDiagramGenerator.SHOW_CARDINALITIES));
         
         try {
-            File pumlFile = Paths.get(plantUmlFile.getParent().toString(), getFileNameWithoutExtension(plantUmlFile.getFileName().toString()) + ".puml").toFile();
+            File pumlFile = outputDir.resolve(model.getDefLangName() + ".puml").toFile();
+            System.out.println(pumlFile.getAbsolutePath());
             
             writer = new PrintWriter(new FileWriter(pumlFile));
             
@@ -139,16 +140,19 @@ public class TransferToMermaid implements TransferToUml {
 //            List<GeneratedImage> list = reader.getGeneratedImages();
 //            System.out.println("Image created: " + list.get(0).getPngFile());
             
+            Path plantUmlFile = outputDir.resolve(model.getDefLangName() + ".png");
             String plantUmlString = Files.readString(pumlFile.toPath());
             try (OutputStream os = new FileOutputStream(plantUmlFile.toFile())) {
                 SourceStringReader sreader = new SourceStringReader(plantUmlString);
-                if (plantUmlFile.toString().toLowerCase().endsWith("png")) {
-                    sreader.generateImage(os, new FileFormatOption(FileFormat.PNG));                     
-                } else if (plantUmlFile.toString().toLowerCase().endsWith("pdf")) {
-                    sreader.generateImage(os, new FileFormatOption(FileFormat.PDF));                                         
-                } else {
-                    throw new IOException("not supported file format");
-                }
+                sreader.generateImage(os, new FileFormatOption(FileFormat.PNG));
+//                if (plantUmlFile.toString().toLowerCase().endsWith("png")) {
+//                    sreader.generateImage(os, new FileFormatOption(FileFormat.PNG));                     
+//                } else if (plantUmlFile.toString().toLowerCase().endsWith("pdf")) {
+//                    sreader.generateImage(os, new FileFormatOption(FileFormat.PDF));                                         
+//                } else {
+//                    throw new IOException("not supported file format");
+//                }
+                return plantUmlFile;
             }
             
         } catch (IOException e) {

@@ -1,4 +1,4 @@
-package ch.so.agi.pprint;
+package ch.so.agi.umleditor;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,12 +23,19 @@ public class UmlEditorUtility {
     // Für meinen Anwendungsfall sollte das i.O. sein.
     
 
-    private static UmlModel iliimport(File iliFiles[], String modeldir) {
+    private static UmlModel iliimport(Path iliFile, String modeldir) {
         Configuration config = new Configuration();
-        for (int filei = 0; filei < iliFiles.length; filei++) {
-            config.addFileEntry(new FileEntry(iliFiles[filei].getAbsolutePath(),
-                    ch.interlis.ili2c.config.FileEntryKind.ILIMODELFILE));
-        }
+
+        
+        //        for (int filei = 0; filei < iliFiles.length; filei++) {
+//            config.addFileEntry(new FileEntry(iliFiles[filei].getAbsolutePath(),
+//                    ch.interlis.ili2c.config.FileEntryKind.ILIMODELFILE));
+//        }
+        
+        
+        config.addFileEntry(new FileEntry(iliFile.toFile().getAbsolutePath(),
+                ch.interlis.ili2c.config.FileEntryKind.ILIMODELFILE));
+
         config.setGenerateWarnings(false);
         config.setOutputKind(GenerateOutputKind.NOOUTPUT);
         config.setAutoCompleteModelList(true);
@@ -54,8 +61,8 @@ public class UmlEditorUtility {
         return null;
     }
     
-    public static boolean prettyPrint(File iliFiles[], String modeldir, Path outputDir) {
-        UmlModel model = UmlEditorUtility.iliimport(iliFiles, modeldir);
+    public static boolean prettyPrint(Path iliFile, String modeldir, Path outputDir) {
+        UmlModel model = UmlEditorUtility.iliimport(iliFile, modeldir);
         if (model == null) {
             return false;
         }
@@ -96,20 +103,19 @@ public class UmlEditorUtility {
         return true;
     }
     
-    public static boolean createUmlDiagram(File iliFiles[], String modeldir, Path outputDir, String umlFileName, UmlDiagramVendor vendor) {
-        UmlModel model = UmlEditorUtility.iliimport(iliFiles, modeldir);
-        TransferToUml transferToUml = UmlDiagramGeneratorFactory.getGenerator(vendor);
+    public static Path createUmlDiagram(Path iliFile, String modeldir, Path outputDir, UmlDiagramVendor vendor) {
+        UmlModel model = UmlEditorUtility.iliimport(iliFile, modeldir);
+        DiagramGenerator diagramGenerator = DiagramGeneratorFactory.getGenerator(vendor);
         try {
             ch.ehi.basics.settings.Settings settings = new ch.ehi.basics.settings.Settings();
-            settings.setValue(TransferToPlantUml.SHOW_ATTRIBUTES, String.valueOf(true));
-            settings.setValue(TransferToPlantUml.SHOW_ATTRIBUTE_TYPES, String.valueOf(true));
-            settings.setValue(TransferToPlantUml.SHOW_CARDINALITIES_OF_ATTRIBUTES, String.valueOf(true));
-            settings.setValue(TransferToPlantUml.SHOW_CARDINALITIES, String.valueOf(true));
-            transferToUml.export(model, outputDir.resolve(umlFileName), settings);
+            settings.setValue(PlantUMLDiagramGenerator.SHOW_ATTRIBUTES, String.valueOf(true));
+            settings.setValue(PlantUMLDiagramGenerator.SHOW_ATTRIBUTE_TYPES, String.valueOf(true));
+            settings.setValue(PlantUMLDiagramGenerator.SHOW_CARDINALITIES_OF_ATTRIBUTES, String.valueOf(true));
+            settings.setValue(PlantUMLDiagramGenerator.SHOW_CARDINALITIES, String.valueOf(true));
+            return diagramGenerator.export(model, outputDir, settings);
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return null;
         }
-        return true;
     }
 }

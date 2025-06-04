@@ -1,16 +1,16 @@
-package ch.so.agi.pprint;
+package ch.so.agi.umleditor;
 
-public class UmlDiagramGeneratorFactory {
-    public static TransferToUml getGenerator(UmlDiagramVendor vendor) {
+public class DiagramGeneratorFactory {
+    public static DiagramGenerator getGenerator(UmlDiagramVendor vendor) {
         if (vendor == null) {
             throw new IllegalArgumentException("Vendor must not be null");
         }
 
         switch (vendor) {
-            case MERMAID:
-                return new TransferToPlantUml();
             case PLANTUML:
-                return new TransferToMermaid();
+                return new PlantUMLDiagramGenerator();
+            case MERMAID:
+                return new MermaidDiagramGenerator();
             default:
                 throw new IllegalArgumentException("Unknown UML diagram vendor: " + vendor);
         }

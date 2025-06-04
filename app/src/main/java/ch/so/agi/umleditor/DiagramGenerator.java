@@ -1,12 +1,12 @@
-package ch.so.agi.pprint;
+package ch.so.agi.umleditor;
 
 import java.nio.file.Path;
 
 import ch.ehi.basics.settings.Settings;
 import ch.ehi.uml1_4.modelmanagement.Model;
 
-public interface TransferToUml {
-    public void export(Model model, Path plantUmlFile, Settings settings) throws Exception;
+public interface DiagramGenerator {
+    public Path export(Model model, Path plantUmlFile, Settings settings) throws Exception;
 
     public static final String SHOW_ATTRIBUTES = "ch.so.agi.interlis.uml.showAttributes";
     

@@ -1,4 +1,4 @@
-package ch.so.agi.pprint;
+package ch.so.agi.umleditor;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -41,7 +41,7 @@ public class App implements Callable<Integer> {
         if (outputDir == null) {
             outputDir = iliFile.getParent();
         }
-        boolean ret = PrettyPrint.run(new File[] {iliFile.toFile()}, outputDir, modeldir);
+        boolean ret = PrettyPrint.run(iliFile, outputDir, modeldir);
         return ret ? 0 : 1;        
     }
 
