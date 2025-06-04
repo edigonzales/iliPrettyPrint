@@ -20,13 +20,9 @@ import org.springframework.util.FileSystemUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
-import ch.ehi.uml1_4.implementation.UmlModel;
-import ch.so.agi.umleditor.PlantUMLDiagramGenerator;
-import ch.so.agi.umleditor.PrettyPrint;
 import ch.so.agi.umleditor.UmlDiagramVendor;
 import ch.so.agi.umleditor.UmlEditorUtility;
 import jakarta.servlet.http.HttpServletRequest;
