@@ -79,7 +79,7 @@ public class MainController {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body("Please select a file to upload.");
         }
-        
+
         UmlDiagramVendor vendor = UmlDiagramVendor.PLANTUML;
         if (vendorParam != null) {
             vendor = UmlDiagramVendor.valueOf(vendorParam);
@@ -103,10 +103,6 @@ public class MainController {
 
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.TEXT_HTML);
-//                htmlTemplate = """
-//                        aaa `%s`
-//                        asdf
-//                        """;
                 return new ResponseEntity<>(htmlTemplate.formatted(mermaidFileContent), headers, HttpStatus.OK);
             } else {
                 byte[] imageBytes;
@@ -141,13 +137,17 @@ public class MainController {
   <script type="module">
     import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
 
-    let direction = 'TB'; // initial direction
-
     const baseCode = `
-%s
-    `;
+classDiagram
+    class c1["Gemeinde"]:::aclass {
+      Name [1..1] : TEXT*500
+      BFSNr [1..1] : 2000..3000
+      Geometrie [1..1] : MultiSurface
+      Bezirk [1..1] : TEXT*50
+    }
 
-    //mermaid.initialize({ startOnLoad: false, flowchart: { curve: "basis", nodeSpacing: 50, rankSpacing: 50 } });
+
+    `;
 
     const renderDiagram = async () => {
       const { svg } = await mermaid.render('theDiagram', baseCode);
@@ -194,15 +194,6 @@ public class MainController {
         }
       };
     };
-
-    window.addEventListener('DOMContentLoaded', async () => {
-      await renderDiagram();
-
-      document.getElementById('toggleDirectionBtn').addEventListener('click', async () => {
-        direction = direction === 'TB' ? 'LR' : 'TB';
-        await renderDiagram();
-      });
-    });
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>

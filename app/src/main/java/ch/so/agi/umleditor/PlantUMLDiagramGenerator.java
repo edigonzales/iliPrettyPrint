@@ -96,7 +96,6 @@ public class PlantUMLDiagramGenerator implements DiagramGenerator {
         
         try {
             File pumlFile = outputDir.resolve(model.getDefLangName() + ".puml").toFile();
-            System.out.println(pumlFile.getAbsolutePath());
             
             writer = new PrintWriter(new FileWriter(pumlFile));
             
