@@ -46,7 +46,7 @@ public class MainController {
     }
 
     @PostMapping(value = "/api/prettyprint", consumes = {"multipart/form-data"}, produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<?> pprint(@RequestPart(name = "file", required = true) MultipartFile file) {
+    public ResponseEntity<?> prettyprint(@RequestPart(name = "file", required = true) MultipartFile file) {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body("Please select a file to upload.");
         }
@@ -102,8 +102,12 @@ public class MainController {
                 deleteTemporaryFiles(inDir, outDir);
 
                 HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.TEXT_PLAIN);
-                return new ResponseEntity<>(mermaidFileContent, headers, HttpStatus.OK);
+                headers.setContentType(MediaType.TEXT_HTML);
+//                htmlTemplate = """
+//                        aaa `%s`
+//                        asdf
+//                        """;
+                return new ResponseEntity<>(htmlTemplate.formatted(mermaidFileContent), headers, HttpStatus.OK);
             } else {
                 byte[] imageBytes;
                 try (InputStream in = Files.newInputStream(umlFile)) {
@@ -127,4 +131,139 @@ public class MainController {
             FileSystemUtils.deleteRecursively(dir);            
         }
     }
+    
+    private String htmlTemplate = """
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Mermaid Diagram</title>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+
+    let direction = 'TB'; // initial direction
+
+    const baseCode = `
+%s
+    `;
+
+    //mermaid.initialize({ startOnLoad: false, flowchart: { curve: "basis", nodeSpacing: 50, rankSpacing: 50 } });
+
+    const renderDiagram = async () => {
+      const { svg } = await mermaid.render('theDiagram', baseCode);
+      const container = document.getElementById('diagramContainer');
+      container.innerHTML = svg;
+
+      // Enable pan/zoom
+      if (window.svgPanZoomInstance) {
+        window.svgPanZoomInstance.destroy();
+      }
+      const svgElement = container.querySelector('svg');
+      window.svgPanZoomInstance = svgPanZoom(svgElement, {
+        zoomEnabled: true,
+        controlIconsEnabled: false,
+        fit: true,
+        center: true,
+        minZoom: 0.2,
+        maxZoom: 10,
+        panEnabled: true
+      });
+
+      document.getElementById('downloadSvgBtn').onclick = () => {
+        const blob = new Blob([svg], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'diagram.svg';
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+
+      document.getElementById('copyCodeBtn').onclick = async () => {
+        const btnSpan = document.querySelector('#copyCodeBtn span');
+        try {
+          await navigator.clipboard.writeText(fullCode);
+          btnSpan.textContent = 'Copied!';
+          document.getElementById('copyCodeBtn').disabled = true;
+          setTimeout(() => {
+            btnSpan.textContent = 'Copy Mermaid Code';
+            document.getElementById('copyCodeBtn').disabled = false;
+          }, 4000);
+        } catch (err) {
+          console.error('Clipboard copy failed:', err);
+        }
+      };
+    };
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      await renderDiagram();
+
+      document.getElementById('toggleDirectionBtn').addEventListener('click', async () => {
+        direction = direction === 'TB' ? 'LR' : 'TB';
+        await renderDiagram();
+      });
+    });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: sans-serif;
+    }
+
+    .controls {
+      padding: 1em;
+      background: white;
+      border-bottom: 1px solid #ccc;
+      display: flex;
+      gap: 1em;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 0.5em 1em;
+      font-size: 1em;
+      width: 240px;
+      cursor: pointer;
+      background: #ECECFF;
+      border: 2px solid #9370DA;
+      border-radius: 5px;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #diagramContainer {
+      flex: 1;
+      background: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    svg {
+      width: 100%%;
+      height: 100%%;
+      max-width: 100%% !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <button id="downloadSvgBtn"><span>Download SVG</span></button>
+    <button id="copyCodeBtn"><span>Copy Mermaid Code</span></button>
+  </div>
+  <div id="diagramContainer"></div>
+</body>
+</html>
+            """;
 }
