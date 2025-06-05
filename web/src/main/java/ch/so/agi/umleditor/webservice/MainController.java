@@ -138,15 +138,7 @@ public class MainController {
     import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
 
     const baseCode = `
-classDiagram
-    class c1["Gemeinde"]:::aclass {
-      Name [1..1] : TEXT*500
-      BFSNr [1..1] : 2000..3000
-      Geometrie [1..1] : MultiSurface
-      Bezirk [1..1] : TEXT*50
-    }
-
-
+%s
     `;
 
     const renderDiagram = async () => {
@@ -161,7 +153,8 @@ classDiagram
       const svgElement = container.querySelector('svg');
       window.svgPanZoomInstance = svgPanZoom(svgElement, {
         zoomEnabled: true,
-        controlIconsEnabled: false,
+        controlIconsEnabled: true,
+        zoomScaleSensitivity: 0.2,
         fit: true,
         center: true,
         minZoom: 0.2,
@@ -182,7 +175,7 @@ classDiagram
       document.getElementById('copyCodeBtn').onclick = async () => {
         const btnSpan = document.querySelector('#copyCodeBtn span');
         try {
-          await navigator.clipboard.writeText(fullCode);
+          await navigator.clipboard.writeText(baseCode);
           btnSpan.textContent = 'Copied!';
           document.getElementById('copyCodeBtn').disabled = true;
           setTimeout(() => {
@@ -194,6 +187,10 @@ classDiagram
         }
       };
     };
+    
+    window.addEventListener('DOMContentLoaded', async () => {
+      await renderDiagram();
+    });
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>

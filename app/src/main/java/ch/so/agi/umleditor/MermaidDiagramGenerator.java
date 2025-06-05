@@ -224,10 +224,10 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
                     String oid = classDef.getOid();
                     writer.println("    class c" + oid + "[\""+ elementName +"\"]:::"+type+" {");
                     if (classDef.isAbstract()) {
-                        writer.println("      &lt;&lt;abstract&gt;&gt;");
+                        writer.println("      <<abstract>>");
                     }
                     if (elementType.equals(ElementType.STRUCTURE)) {
-                        writer.println("      &lt;&lt;Structure&gt;&gt;");
+                        writer.println("     <<Structure>>");
                     }
 
                     // Handle inheritance
@@ -243,7 +243,7 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
                     DomainDef domainDef = (DomainDef) modelDef;
                     if (domainDef.getType() instanceof Enumeration) {
                         writer.println("    class e" + domainDef.getOid() + "[\""+ elementName +"\"]:::aenumeration {");
-                        writer.println("      &lt;&lt;Enumeration&gt;&gt;");
+                        writer.println("      <<Enumeration>>");
                     }                    
                 default:
                     // Other element types not directly represented in class diagram
@@ -367,7 +367,7 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
             
         }
                         
-        inheritanceList.add("c" + parentClassOid + " &lt;|-- c" + childClassOid);
+        inheritanceList.add("c" + parentClassOid + " <|-- c" + childClassOid);
     }
     
     private void processAssociation(AssociationDef assocDef, String baselanguage) {
