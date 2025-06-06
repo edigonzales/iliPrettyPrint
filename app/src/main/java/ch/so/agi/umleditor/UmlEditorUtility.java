@@ -1,6 +1,5 @@
 package ch.so.agi.umleditor;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Iterator;
@@ -18,24 +17,10 @@ import ch.interlis.ili2c.metamodel.TransferDescription;
 
 public class UmlEditorUtility {
     
-    
-    // TODO: beschränken auf eine Datei. Dann kann ich auch immer den Namen davon ableiten.
-    // Für meinen Anwendungsfall sollte das i.O. sein.
-    
-
     private static UmlModel iliimport(Path iliFile, String modeldir) {
         Configuration config = new Configuration();
-
-        
-        //        for (int filei = 0; filei < iliFiles.length; filei++) {
-//            config.addFileEntry(new FileEntry(iliFiles[filei].getAbsolutePath(),
-//                    ch.interlis.ili2c.config.FileEntryKind.ILIMODELFILE));
-//        }
-        
-        
         config.addFileEntry(new FileEntry(iliFile.toFile().getAbsolutePath(),
                 ch.interlis.ili2c.config.FileEntryKind.ILIMODELFILE));
-
         config.setGenerateWarnings(false);
         config.setOutputKind(GenerateOutputKind.NOOUTPUT);
         config.setAutoCompleteModelList(true);
