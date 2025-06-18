@@ -95,6 +95,15 @@ publishing {
             groupId = "io.github.sogis"
             artifactId = myArtifactId
 
+            // Customize the generated POM
+            pom.withXml {
+                def dependenciesNode = asNode().getAt('dependencies')[0]
+                dependenciesNode?.children()?.removeIf { dep ->
+                    def groupId = dep.getAt('groupId')[0]?.text()
+                    return groupId == null || groupId.trim() == ''
+                }
+            }
+
             pom {
                 name = "iliprettyprint"
                 url = "https://github.com/edigonzales/iliPrettyPrint"
