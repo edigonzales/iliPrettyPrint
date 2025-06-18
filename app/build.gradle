@@ -95,6 +95,7 @@ publishing {
             artifact(shadowJar) {
                 classifier = 'all' // Ensure it's unique
                 extension = 'jar'
+                builtBy shadowJar
             }            
             groupId = "io.github.sogis"
             artifactId = myArtifactId
@@ -128,7 +129,7 @@ publishing {
 //if (System.getProperty('release') != null) {
 if (true) {
     signing {
-        sign publishing.publications.mavenJava
+        sign sourcesJar, javadocJar, tasks.named("jar").get()
     }
 }
 
