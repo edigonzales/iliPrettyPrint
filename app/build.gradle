@@ -92,8 +92,10 @@ publishing {
             artifact sourcesJar
             artifact javadocJar
             
-            artifact shadowJar
-            
+            artifact(shadowJar) {
+                classifier = 'all' // Ensure it's unique
+                extension = 'jar'
+            }            
             groupId = "io.github.sogis"
             artifactId = myArtifactId
 
