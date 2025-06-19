@@ -85,6 +85,10 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
+tasks.withType(GenerateModuleMetadata) {
+    enabled = false
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
@@ -94,6 +98,15 @@ publishing {
             
             groupId = "io.github.sogis"
             artifactId = myArtifactId
+
+            // Customize the generated POM
+            pom.withXml {
+                def dependenciesNode = asNode().getAt('dependencies')[0]
+                dependenciesNode?.children()?.removeIf { dep ->
+                    def groupId = dep.getAt('groupId')[0]?.text()
+                    return groupId == null || groupId.trim() == ''
+                }
+            }
 
             pom {
                 name = "iliprettyprint"
