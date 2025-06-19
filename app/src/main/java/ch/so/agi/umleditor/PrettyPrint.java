@@ -1,9 +1,6 @@
 package ch.so.agi.umleditor;
 
-import java.io.File;
 import java.nio.file.Path;
-
-import ch.ehi.uml1_4.implementation.UmlModel;
 
 public class PrettyPrint {
     
