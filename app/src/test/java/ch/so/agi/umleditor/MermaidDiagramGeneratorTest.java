@@ -71,7 +71,7 @@ public class MermaidDiagramGeneratorTest {
         // Validate
 //        String fileContent = readMermaidFile(tempDirectory.toPath());
 //        assertTrue(fileContent.contains("Symbol [1] : BLACKBOX BINARY"));
-    }
+//    }
 
     
     private Settings getSettings() {
