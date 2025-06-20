@@ -21,6 +21,8 @@ import ch.ehi.interlis.attributes.DomainAttribute;
 import ch.ehi.interlis.constraints.ConstraintDef;
 import ch.ehi.interlis.domainsandconstants.DomainDef;
 import ch.ehi.interlis.domainsandconstants.Type;
+import ch.ehi.interlis.domainsandconstants.UnknownType;
+import ch.ehi.interlis.domainsandconstants.basetypes.BlackboxType;
 import ch.ehi.interlis.domainsandconstants.basetypes.BooleanType;
 import ch.ehi.interlis.domainsandconstants.basetypes.EnumElement;
 import ch.ehi.interlis.domainsandconstants.basetypes.Enumeration;
@@ -262,9 +264,14 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
             while (attributeIt.hasNext()) {
                 Object object = attributeIt.next();
                 if (object instanceof AttributeDef) {
+                    System.out.println("\n");
+                    System.out.println("---------------------------------------------------------------");
+                    
                     AttributeDef attrDef = (AttributeDef) object;
                     String attrName = attrDef.getName().getValue(baselanguage);
                     String attrType = getAttributeType(attrDef);
+                    
+                    System.out.println(attrName + " " + attrType);
                            
                     String multiplicityString = "";
                     Multiplicity m = attrDef.getMultiplicity();
@@ -469,12 +476,16 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
 
     private String getAttributeType(AttributeDef attrDef) {                
         if (attrDef.containsAttrType()) {
-            DomainAttribute attr = (DomainAttribute) attrDef.getAttrType();            
+            DomainAttribute attr = (DomainAttribute) attrDef.getAttrType(); 
+            System.out.println("DomainAttribute attr: " + attr);
             if (attr.containsDomainDef()) {
                 // e.g. enums                
                 return attr.getDomainDef().getDefLangName();
             } else if (attr.containsDirect()) {
+                System.out.println("attr.containsDirect()");
+
                 Type type = attr.getDirect();
+                System.out.println("attr.getDirect(): " + type.getClass());
                 
                 if (type instanceof StructAttrType) {
                     StructAttrType structAttrType = (StructAttrType) (type);
@@ -510,7 +521,10 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
                         return "NUMERIC";
                     }
                     
-                } 
+                } else if (type instanceof UnknownType) {
+                    UnknownType unknownType = (UnknownType)type;
+                    return unknownType.getSyntax().getValue();
+                }
 
                 // Return a string representation of the type
                 return type.getClass().getSimpleName().replace("Def", "");
