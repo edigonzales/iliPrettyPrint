@@ -56,17 +56,17 @@ public class MermaidDiagramGeneratorTest {
     }
     
     // TODO
-    @Test
-    public void range_Ok() throws Exception {
-        // Prepare
-        tempDirectory = Paths.get("/Users/stefan/tmp/").toFile();
-        
-        Path iliFile = Paths.get("src/test/data/Paerke_V1_3.ili");
-        UmlModel model = UmlEditorUtility.iliimport(iliFile, null);
-
-        // Execute test
-        DiagramGenerator diagramGenerator = new MermaidDiagramGenerator();
-        diagramGenerator.export(model, tempDirectory.toPath(), getSettings());
+//    @Test
+//    public void range_Ok() throws Exception {
+//        // Prepare
+//        tempDirectory = Paths.get("/Users/stefan/tmp/").toFile();
+//        
+//        Path iliFile = Paths.get("src/test/data/Paerke_V1_3.ili");
+//        UmlModel model = UmlEditorUtility.iliimport(iliFile, null);
+//
+//        // Execute test
+//        DiagramGenerator diagramGenerator = new MermaidDiagramGenerator();
+//        diagramGenerator.export(model, tempDirectory.toPath(), getSettings());
         
         // Validate
 //        String fileContent = readMermaidFile(tempDirectory.toPath());
