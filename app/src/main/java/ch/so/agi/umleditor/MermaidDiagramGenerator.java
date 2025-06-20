@@ -278,7 +278,13 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
                     MultiplicityRange mr = null;
                     if (m != null) {
                         mr = (MultiplicityRange) m.iteratorRange().next();
-                        multiplicityString = "[" + mr.getLower() + ".." + (mr.getUpper() == Long.MAX_VALUE ? "*" : mr.getUpper()) + "]";   
+                        long lower = mr.getLower();
+                        long upper = mr.getUpper();
+                        if (lower == upper) {
+                            multiplicityString = "[" + lower + "]";                               
+                        } else {
+                            multiplicityString = "[" + lower + ".." + (upper == Long.MAX_VALUE ? "*" : upper) + "]";                               
+                        }
                     }
 
                     if (showAttributes) {
