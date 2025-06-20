@@ -31,6 +31,7 @@ import ch.ehi.interlis.domainsandconstants.basetypes.StructAttrType;
 import ch.ehi.interlis.domainsandconstants.basetypes.Text;
 import ch.ehi.interlis.domainsandconstants.basetypes.TextKind;
 import ch.ehi.interlis.domainsandconstants.linetypes.LineFormTypeDef;
+import ch.ehi.interlis.domainsandconstants.linetypes.LineType;
 import ch.ehi.interlis.functions.FunctionDef;
 import ch.ehi.interlis.graphicdescriptions.GraphicParameterDef;
 import ch.ehi.interlis.metaobjects.MetaDataUseDef;
@@ -60,10 +61,13 @@ import ch.ehi.basics.settings.Settings;
 public class MermaidDiagramGenerator implements DiagramGenerator {
 
     private PrintWriter writer;
-    private Map<String, String> classNameMap = new HashMap<>();
-    private Set<String> processedAssociations = new HashSet<>();
-    private List<String> inheritanceList = new ArrayList<>();
-    private List<String> associationList = new ArrayList<>();
+    private Map<String, String> classNameMap = new HashMap<>(); // wird glaub momentan nicht benötigt
+    private Set<String> processedAssociations = new HashSet<>(); // Welche Assoziation wurde bereits prozessiert?
+    private List<String> inheritanceList = new ArrayList<>(); // Mermaid-String für Vererbung
+    private List<String> associationList = new ArrayList<>(); // Mermaid-String für Assoziationen
+    private List<String> dependencyList = new ArrayList<>();
+    private List<String> internalModels = new ArrayList<>(); // Liste mit Namen der nicht-internen Modelle. Damit man bei der Vererbung weiss, ob die Klasse intern oder extern ist. 
+    private Map<String, String> externalClasses = new HashMap<>(); // Externe Klassen werden bei der Vererbung gesammelt und nachträglich exportiert.
     private String language;
     private Settings settings;
     private boolean showAttributes = false;
@@ -99,11 +103,12 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
             writer = new PrintWriter(new FileWriter(mermaidFile));
             
             // Start Mermaid diagram
-            if (showTitle) {
-                writer.println("---");
-                writer.println("title: " + model.getDefLangName());
-                writer.println("---");                
-            }
+            writer.println("---");
+            if (showTitle) writer.println("title: " + model.getDefLangName());
+            writer.println("  config:");
+            writer.println("    class:");
+            writer.println("      hideEmptyMembersBox: true");
+            writer.println("---");                
             writer.println("classDiagram");
             
             // Process model elements
@@ -125,6 +130,15 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
                 }
             }
 
+            for (var entry : externalClasses.entrySet()) {
+                System.out.println(entry.getKey() + "/" + entry.getValue());
+                String oid = entry.getKey();
+                String elementName = entry.getValue();
+                writer.println("    class c" + oid + "[\""+ elementName +"\"]:::aclass {");
+                writer.println("      <<External>>");
+                writer.println("    }");
+            }
+            
             for (String association : associationList) {
                 writer.println(association);
             }
@@ -132,6 +146,11 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
             for (String inheritance : inheritanceList) {
                 writer.println(inheritance);
             }
+
+            // Scheint glaub nicht für Namespaces zu funktionieren in Mermaid.
+//            for (String dependency : dependencyList) {
+//                writer.println(dependency);
+//            }
             
             // Funktioniert nicht, falls embedded in HTML.
 //            writer.println("classDef aclass fill:#EEEEEE,stroke:#999999,stroke-width:2px,color:#000;");
@@ -159,10 +178,20 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
             
             while (i.hasNext()) {
                 ModelElement modelElement = i.next();
-                //System.out.println("modelElement: " + modelElement.getName());
+                System.out.println("modelElement: " + modelElement.getName());
+                internalModels.add(modelElement.getDefLangName());
                 visitModelElement(modelElement, null, baselanguage, languages);
             }
-        }
+        } 
+//        else {
+//            Set<ModelElement> childElements = ch.ehi.interlis.tools.ModelElementUtility.getChildElements((Namespace) obj, null);
+//            Iterator<ModelElement> i = childElements.iterator();
+//            
+//            while (i.hasNext()) {
+//                ModelElement modelElement = i.next();
+//                System.out.println("EXTERNAL modelElement: " + modelElement.getName());
+//            }
+//        }
     }
     
     private String findBaseLanguage(INTERLIS2Def modelDef) {
@@ -206,11 +235,11 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
         String fullScopedName = getScopedName(scopedNamePrefix, modelDef, baselanguage);
         //System.out.println("fullScopedName: " + fullScopedName);
         
-        // Store class name for later relationship building
-        if (elementType != null && (elementType.equals(ElementType.CLASS) || 
-                                     elementType.equals(ElementType.STRUCTURE))) {
-            classNameMap.put(fullScopedName, elementName);
-        }
+//        // Store class name for later relationship building
+//        if (elementType != null && (elementType.equals(ElementType.CLASS) || 
+//                                     elementType.equals(ElementType.STRUCTURE))) {
+//            classNameMap.put(fullScopedName, elementName);
+//        }
         
         // Process according to element type
         if (elementType != null) {
@@ -247,9 +276,15 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
                     
                 case ElementType.DOMAIN:                    
                     DomainDef domainDef = (DomainDef) modelDef;
+                    System.out.println("domainDef: " + domainDef.getType());
                     if (domainDef.getType() instanceof Enumeration) {
                         writer.println("    class e" + domainDef.getOid() + "[\""+ elementName +"\"]:::aenumeration {");
                         writer.println("      <<Enumeration>>");
+                    } else if (domainDef.getType() instanceof LineType) {
+                        System.out.println("****************");
+                        writer.println("    class l" + domainDef.getOid() + "[\""+ elementName +"\"]:::alinetype {");
+                        writer.println("      <<LineType>>");
+
                     }                    
                 default:
                     // Other element types not directly represented in class diagram
@@ -327,6 +362,22 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
             }
             
         } else if (modelDef instanceof Namespace) {
+            Namespace topicDef = (Namespace)modelDef;
+            
+            Iterator dependsi = topicDef.iteratorClientDependency();
+            while (dependsi.hasNext()) {
+                Object obj = dependsi.next();
+                if (obj instanceof ch.ehi.interlis.modeltopicclass.TopicDepends) {
+                    ch.ehi.interlis.modeltopicclass.TopicDepends depends = (ch.ehi.interlis.modeltopicclass.TopicDepends)obj;
+                    Iterator supplieri = depends.iteratorSupplier();
+                    if (supplieri.hasNext()) {
+                        TopicDef supplier = (TopicDef)supplieri.next();
+                        String dependency = topicDef.getDefLangName() + "..>" + supplier.getDefLangName();
+                        dependencyList.add(dependency);
+                    }
+                }
+            }
+            
             // Process children elements
             Iterator childIt = ch.ehi.interlis.tools.ModelElementUtility.getChildElements((Namespace) modelDef, null)
                     .iterator();
@@ -346,6 +397,7 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
 //                    writer.println();
 //                    break;
                 case ElementType.DOMAIN:
+//                    writer.print(elementType);
                     writer.println("    }");
                     writer.println();
                     break;
@@ -380,7 +432,22 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
         Iterator geni = classDef.iteratorGeneralization();
         while (geni.hasNext()) {
             ClassExtends classExtends = (ClassExtends) geni.next();
+            ClassDef parentDef = (ClassDef)classExtends.getParent();
+
+            String parentModelName = ch.ehi.interlis.tools.ModelElementUtility.getModel(parentDef).getDefLangName();
+            if (!internalModels.contains(parentModelName)) {
+                System.out.println("********* externes Modell gefunden: " + parentModelName );
+                
+                externalClasses.put(parentDef.getOid(), parentDef.getDefLangName());
+                
+            }
+            
+//            System.out.println("getModel: " + ch.ehi.interlis.tools.ModelElementUtility.getModel(parentDef).getDefLangName());
+//            System.out.println("((ClassDef)classExtends.getParent()): " + ((ClassDef)classExtends.getParent()).getName().getValue());
+//            System.out.println("((ClassDef)classExtends.getParent()): " + ((ClassDef)classExtends.getParent()).getOid());
+            
             parentClassOid = ((ClassDef)classExtends.getParent()).getOid();
+            
             
         }
                         
@@ -390,6 +457,8 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
     private void processAssociation(AssociationDef assocDef, String baselanguage) {
         // Process roles in the association
         String assocName = assocDef.getName() != null ? assocDef.getName().getValue(baselanguage) : "";
+        
+        System.out.println("assocName: " + assocName);
         
         StringBuilder relationBuilder = new StringBuilder();
         String leftClass = null;
@@ -413,7 +482,7 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
             
             // Get cardinality
             String cardinality = "";
-            if (showCardinalities) {
+            if (showCardinalities && roleDef.getMultiplicity() != null) {                
                 Iterator rangeIt = roleDef.getMultiplicity().iteratorRange();
                 if (rangeIt.hasNext()) {
                     UmlMultiplicityRange range = (UmlMultiplicityRange) rangeIt.next();
