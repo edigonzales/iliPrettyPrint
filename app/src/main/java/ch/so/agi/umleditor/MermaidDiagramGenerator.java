@@ -68,6 +68,7 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
     private boolean showAttributeTypes = false;
     private boolean showCardinalitiesOfAttributes = false;
     private boolean showCardinalities = true;
+    private boolean showTitle = true;
 
     // TODO
     // - Attributtype (?, ...)
@@ -88,6 +89,7 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
         showAttributeTypes = Boolean.valueOf(settings.getValue(PlantUMLDiagramGenerator.SHOW_ATTRIBUTE_TYPES));
         showCardinalitiesOfAttributes = Boolean.valueOf(settings.getValue(PlantUMLDiagramGenerator.SHOW_CARDINALITIES_OF_ATTRIBUTES));
         showCardinalities = Boolean.valueOf(settings.getValue(PlantUMLDiagramGenerator.SHOW_CARDINALITIES));
+        showTitle = Boolean.valueOf(settings.getValue(PlantUMLDiagramGenerator.SHOW_TITLE));
         
         try {
             File mermaidFile = outputDir.resolve(model.getDefLangName() + ".mmd").toFile();
@@ -95,9 +97,11 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
             writer = new PrintWriter(new FileWriter(mermaidFile));
             
             // Start Mermaid diagram
-            writer.println("---");
-            writer.println("title: " + model.getDefLangName());
-            writer.println("---");
+            if (showTitle) {
+                writer.println("---");
+                writer.println("title: " + model.getDefLangName());
+                writer.println("---");                
+            }
             writer.println("classDiagram");
             
             // Process model elements
@@ -190,7 +194,7 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
     }
         
     /**
-     * Processes a model element and generates PlantUML representation
+     * Processes a model element and generates Mermaid representation
      */
     private void visitModelElement(ModelElement modelDef, String scopedNamePrefix, String baselanguage, Set languages) {
         String elementType = getElementType(modelDef);

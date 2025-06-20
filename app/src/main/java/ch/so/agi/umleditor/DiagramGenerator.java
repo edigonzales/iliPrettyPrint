@@ -15,4 +15,6 @@ public interface DiagramGenerator {
     public static final String SHOW_CARDINALITIES_OF_ATTRIBUTES = "ch.so.agi.interlis.uml.showCardinalitiesOfAttributes";
     
     public static final String SHOW_CARDINALITIES = "ch.so.agi.interlis.uml.showCardinalities";
+    
+    public static final String SHOW_TITLE = "ch.so.agi.interlis.uml.showTitle";
 }

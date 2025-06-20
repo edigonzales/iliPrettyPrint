@@ -85,6 +85,7 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
+// module file nicht erzeugen. Dito wegen fehlender groupId
 tasks.withType(GenerateModuleMetadata) {
     enabled = false
 }
@@ -99,7 +100,8 @@ publishing {
             groupId = "io.github.sogis"
             artifactId = myArtifactId
 
-            // Customize the generated POM
+            // Die lokalen Libs haben keine groupId.
+            // Gradle kann das pom.xml nicht parsen.
             pom.withXml {
                 def dependenciesNode = asNode().getAt('dependencies')[0]
                 dependenciesNode?.children()?.removeIf { dep ->

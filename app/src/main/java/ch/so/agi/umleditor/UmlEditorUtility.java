@@ -17,7 +17,7 @@ import ch.interlis.ili2c.metamodel.TransferDescription;
 
 public class UmlEditorUtility {
     
-    private static UmlModel iliimport(Path iliFile, String modeldir) {
+    public static UmlModel iliimport(Path iliFile, String modeldir) {
         Configuration config = new Configuration();
         config.addFileEntry(new FileEntry(iliFile.toFile().getAbsolutePath(),
                 ch.interlis.ili2c.config.FileEntryKind.ILIMODELFILE));
@@ -97,6 +97,7 @@ public class UmlEditorUtility {
             settings.setValue(PlantUMLDiagramGenerator.SHOW_ATTRIBUTE_TYPES, String.valueOf(true));
             settings.setValue(PlantUMLDiagramGenerator.SHOW_CARDINALITIES_OF_ATTRIBUTES, String.valueOf(true));
             settings.setValue(PlantUMLDiagramGenerator.SHOW_CARDINALITIES, String.valueOf(true));
+            settings.setValue(PlantUMLDiagramGenerator.SHOW_TITLE, String.valueOf(false));
             return diagramGenerator.export(model, outputDir, settings);
         } catch (Exception e) {
             e.printStackTrace();
