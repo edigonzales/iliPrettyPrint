@@ -24,7 +24,7 @@ public class MermaidDiagramGeneratorTest {
     @Test
     public void blackboxBinary_Ok() throws Exception {
         // Prepare
-        tempDirectory = Paths.get("/Users/stefan/tmp/").toFile();
+        //tempDirectory = Paths.get("/Users/stefan/tmp/").toFile();
         
         Path iliFile = Paths.get("src/test/data/Gewaesserraum_LegendeEintrag_OEREBZusatz_V1_1.ili");
         UmlModel model = UmlEditorUtility.iliimport(iliFile, null);
@@ -41,7 +41,7 @@ public class MermaidDiagramGeneratorTest {
     @Test
     public void singleMultiplicity_Ok() throws Exception {
         // Prepare
-        tempDirectory = Paths.get("/Users/stefan/tmp/").toFile();
+        //tempDirectory = Paths.get("/Users/stefan/tmp/").toFile();
         
         Path iliFile = Paths.get("src/test/data/Gewaesserraum_LegendeEintrag_OEREBZusatz_V1_1.ili");
         UmlModel model = UmlEditorUtility.iliimport(iliFile, null);
@@ -54,7 +54,6 @@ public class MermaidDiagramGeneratorTest {
         String fileContent = readMermaidFile(tempDirectory.toPath());
         assertTrue(fileContent.contains("Symbol [1] : BLACKBOX BINARY"));
     }
-
     
     private Settings getSettings() {
         Settings settings = new Settings();
