@@ -22,7 +22,6 @@ import ch.ehi.interlis.constraints.ConstraintDef;
 import ch.ehi.interlis.domainsandconstants.DomainDef;
 import ch.ehi.interlis.domainsandconstants.Type;
 import ch.ehi.interlis.domainsandconstants.UnknownType;
-import ch.ehi.interlis.domainsandconstants.basetypes.BlackboxType;
 import ch.ehi.interlis.domainsandconstants.basetypes.BooleanType;
 import ch.ehi.interlis.domainsandconstants.basetypes.DateType;
 import ch.ehi.interlis.domainsandconstants.basetypes.EnumElement;
@@ -79,7 +78,7 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
     private boolean showTitle = true;
 
     // TODO
-    // - Attributtype (?, ...)
+    // - ...
     
     // Konfigmöglichkeiten
     // - qualifiedNames (wegen Strukturen etc.)
@@ -179,7 +178,7 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
             
             while (i.hasNext()) {
                 ModelElement modelElement = i.next();
-                System.out.println("modelElement: " + modelElement.getName());
+                //System.out.println("modelElement: " + modelElement.getName());
                 internalModels.add(modelElement.getDefLangName());
                 visitModelElement(modelElement, null, baselanguage, languages);
             }
@@ -225,7 +224,7 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
         
         // Calculate full scoped name
         String fullScopedName = getScopedName(scopedNamePrefix, modelDef, baselanguage);
-        System.out.println("fullScopedName: " + fullScopedName);
+        //System.out.println("fullScopedName: " + fullScopedName);
         
 //        // Store class name for later relationship building
 //        if (elementType != null && (elementType.equals(ElementType.CLASS) || 
@@ -233,7 +232,7 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
 //            classNameMap.put(fullScopedName, elementName);
 //        }
         
-        System.out.println("elementType: " + elementType);
+        //System.out.println("elementType: " + elementType);
 
         // Process according to element type
         if (elementType != null) {
@@ -270,7 +269,7 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
                     
                 case ElementType.DOMAIN:                    
                     DomainDef domainDef = (DomainDef) modelDef;
-                    System.out.println("domainDef: " + domainDef.getType());
+                    //System.out.println("domainDef: " + domainDef.getType());
                     if (domainDef.getType() instanceof Enumeration) {
                         writer.println("    class e" + domainDef.getOid() + "[\""+ elementName +"\"]:::aenumeration {");
                         writer.println("      <<Enumeration>>");
@@ -290,7 +289,6 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
                     }
                     break;
                 case ElementType.FUNCTION: 
-                    System.out.println(modelDef.getClass());
                     FunctionDef functionDef = (FunctionDef) modelDef;
                     writer.println("    class f" + functionDef.getOid() + "[\""+ elementName +"\"]:::afunctiontype {");
                     writer.println("      <<Function>>");
@@ -309,14 +307,14 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
             while (attributeIt.hasNext()) {
                 Object object = attributeIt.next();
                 if (object instanceof AttributeDef) {
-                    System.out.println("\n");
-                    System.out.println("---------------------------------------------------------------");
+//                    System.out.println("\n");
+//                    System.out.println("---------------------------------------------------------------");
                     
                     AttributeDef attrDef = (AttributeDef) object;
                     String attrName = attrDef.getName().getValue(baselanguage);
                     String attrType = getAttributeType(attrDef);
                     
-                    System.out.println(attrName + " " + attrType);
+//                    System.out.println(attrName + " " + attrType);
                            
                     String multiplicityString = "";
                     Multiplicity m = attrDef.getMultiplicity();
@@ -452,19 +450,13 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
 
             String parentModelName = ch.ehi.interlis.tools.ModelElementUtility.getModel(parentDef).getDefLangName();
             if (!internalModels.contains(parentModelName)) {
-                System.out.println("********* externes Modell gefunden: " + parentModelName );
-                
+//                System.out.println("********* externes Modell gefunden: " + parentModelName );
                 externalClasses.put(parentDef.getOid(), parentDef.getDefLangName());
-                
             }
-            
 //            System.out.println("getModel: " + ch.ehi.interlis.tools.ModelElementUtility.getModel(parentDef).getDefLangName());
 //            System.out.println("((ClassDef)classExtends.getParent()): " + ((ClassDef)classExtends.getParent()).getName().getValue());
 //            System.out.println("((ClassDef)classExtends.getParent()): " + ((ClassDef)classExtends.getParent()).getOid());
-            
             parentClassOid = ((ClassDef)classExtends.getParent()).getOid();
-            
-            
         }
                         
         inheritanceList.add("c" + parentClassOid + " <|-- c" + childClassOid);
@@ -474,7 +466,7 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
         // Process roles in the association
         String assocName = assocDef.getName() != null ? assocDef.getName().getValue(baselanguage) : "";
         
-        System.out.println("assocName: " + assocName);
+//        System.out.println("assocName: " + assocName);
         
         StringBuilder relationBuilder = new StringBuilder();
         String leftClass = null;
@@ -568,16 +560,14 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
     private String getAttributeType(AttributeDef attrDef) {                
         if (attrDef.containsAttrType()) {
             DomainAttribute attr = (DomainAttribute) attrDef.getAttrType(); 
-            System.out.println("DomainAttribute attr: " + attr);
+//            System.out.println("DomainAttribute attr: " + attr);
             if (attr.containsDomainDef()) {
                 // e.g. enums                
                 return attr.getDomainDef().getDefLangName();
             } else if (attr.containsDirect()) {
-                System.out.println("attr.containsDirect()");
-
+//                System.out.println("attr.containsDirect()");
                 Type type = attr.getDirect();
-                System.out.println("attr.getDirect(): " + type.getClass());
-                
+//                System.out.println("attr.getDirect(): " + type.getClass());
                 if (type instanceof StructAttrType) {
                     StructAttrType structAttrType = (StructAttrType) (type);
                     return structAttrType.getParticipant().getDefLangName();
