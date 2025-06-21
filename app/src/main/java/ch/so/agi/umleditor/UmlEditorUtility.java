@@ -17,7 +17,7 @@ import ch.interlis.ili2c.metamodel.TransferDescription;
 
 public class UmlEditorUtility {
     
-    public static UmlModel iliimport(Path iliFile, String modeldir) {
+    public static synchronized UmlModel iliimport(Path iliFile, String modeldir) {
         Configuration config = new Configuration();
         config.addFileEntry(new FileEntry(iliFile.toFile().getAbsolutePath(),
                 ch.interlis.ili2c.config.FileEntryKind.ILIMODELFILE));

@@ -73,7 +73,19 @@ public class MermaidDiagramGeneratorTest {
 //        assertTrue(fileContent.contains("Symbol [1] : BLACKBOX BINARY"));
 //    }
 
-    
+//    @Test
+//    public void fubar() throws Exception {
+//        // Prepare
+//        tempDirectory = Paths.get("/Users/stefan/tmp/").toFile();
+//    
+//        Path iliFile = Paths.get("src/test/data/Text.ili");
+//        UmlModel model = UmlEditorUtility.iliimport(iliFile, null);
+//    
+//        // Execute test
+//        DiagramGenerator diagramGenerator = new MermaidDiagramGenerator();
+//        diagramGenerator.export(model, tempDirectory.toPath(), getSettings());
+//    }
+      
     private Settings getSettings() {
         Settings settings = new Settings();
         settings.setValue(PlantUMLDiagramGenerator.SHOW_ATTRIBUTES, String.valueOf(true));

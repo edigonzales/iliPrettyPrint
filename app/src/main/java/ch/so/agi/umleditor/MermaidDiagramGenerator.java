@@ -24,6 +24,7 @@ import ch.ehi.interlis.domainsandconstants.Type;
 import ch.ehi.interlis.domainsandconstants.UnknownType;
 import ch.ehi.interlis.domainsandconstants.basetypes.BlackboxType;
 import ch.ehi.interlis.domainsandconstants.basetypes.BooleanType;
+import ch.ehi.interlis.domainsandconstants.basetypes.DateType;
 import ch.ehi.interlis.domainsandconstants.basetypes.EnumElement;
 import ch.ehi.interlis.domainsandconstants.basetypes.Enumeration;
 import ch.ehi.interlis.domainsandconstants.basetypes.NumericType;
@@ -68,6 +69,7 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
     private List<String> dependencyList = new ArrayList<>();
     private List<String> internalModels = new ArrayList<>(); // Liste mit Namen der nicht-internen Modelle. Damit man bei der Vererbung weiss, ob die Klasse intern oder extern ist. 
     private Map<String, String> externalClasses = new HashMap<>(); // Externe Klassen werden bei der Vererbung gesammelt und nachträglich exportiert.
+    private boolean closeDomain = false; // Zur Sicherheit, falls noch nicht alles unterstützt ist.
     private String language;
     private Settings settings;
     private boolean showAttributes = false;
@@ -131,7 +133,6 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
             }
 
             for (var entry : externalClasses.entrySet()) {
-                System.out.println(entry.getKey() + "/" + entry.getValue());
                 String oid = entry.getKey();
                 String elementName = entry.getValue();
                 writer.println("    class c" + oid + "[\""+ elementName +"\"]:::aclass {");
@@ -171,7 +172,7 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
             String baselanguage = findBaseLanguage(obj);
             language = baselanguage;
             Set<String> languages = findLanguages(obj);
-            
+
             // Process all child elements
             Set<ModelElement> childElements = ch.ehi.interlis.tools.ModelElementUtility.getChildElements((Namespace) obj, null);
             Iterator<ModelElement> i = childElements.iterator();
@@ -183,15 +184,6 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
                 visitModelElement(modelElement, null, baselanguage, languages);
             }
         } 
-//        else {
-//            Set<ModelElement> childElements = ch.ehi.interlis.tools.ModelElementUtility.getChildElements((Namespace) obj, null);
-//            Iterator<ModelElement> i = childElements.iterator();
-//            
-//            while (i.hasNext()) {
-//                ModelElement modelElement = i.next();
-//                System.out.println("EXTERNAL modelElement: " + modelElement.getName());
-//            }
-//        }
     }
     
     private String findBaseLanguage(INTERLIS2Def modelDef) {
@@ -233,7 +225,7 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
         
         // Calculate full scoped name
         String fullScopedName = getScopedName(scopedNamePrefix, modelDef, baselanguage);
-        //System.out.println("fullScopedName: " + fullScopedName);
+        System.out.println("fullScopedName: " + fullScopedName);
         
 //        // Store class name for later relationship building
 //        if (elementType != null && (elementType.equals(ElementType.CLASS) || 
@@ -241,6 +233,8 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
 //            classNameMap.put(fullScopedName, elementName);
 //        }
         
+        System.out.println("elementType: " + elementType);
+
         // Process according to element type
         if (elementType != null) {
             switch (elementType) {
@@ -280,12 +274,28 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
                     if (domainDef.getType() instanceof Enumeration) {
                         writer.println("    class e" + domainDef.getOid() + "[\""+ elementName +"\"]:::aenumeration {");
                         writer.println("      <<Enumeration>>");
+                        closeDomain = true;
                     } else if (domainDef.getType() instanceof LineType) {
-                        System.out.println("****************");
                         writer.println("    class l" + domainDef.getOid() + "[\""+ elementName +"\"]:::alinetype {");
                         writer.println("      <<LineType>>");
+                        closeDomain = true;
+                    } else if (domainDef.getType() instanceof DateType) {
+                        writer.println("    class b" + domainDef.getOid() + "[\""+ elementName +"\"]:::abasetype {");
+                        writer.println("      <<DateType>>");
+                        closeDomain = true;                        
+                    } else if (domainDef.getType() instanceof Text) {
+                        writer.println("    class b" + domainDef.getOid() + "[\""+ elementName +"\"]:::abasetype {");
+                        writer.println("      <<Text>>");
+                        closeDomain = true;                        
+                    }
+                    break;
+                case ElementType.FUNCTION: 
+                    System.out.println(modelDef.getClass());
+                    FunctionDef functionDef = (FunctionDef) modelDef;
+                    writer.println("    class f" + functionDef.getOid() + "[\""+ elementName +"\"]:::afunctiontype {");
+                    writer.println("      <<Function>>");
 
-                    }                    
+                    break;
                 default:
                     // Other element types not directly represented in class diagram
                     break;
@@ -396,10 +406,16 @@ public class MermaidDiagramGenerator implements DiagramGenerator {
 //                    writer.println("}");
 //                    writer.println();
 //                    break;
-                case ElementType.DOMAIN:
-//                    writer.print(elementType);
-                    writer.println("    }");
+                case ElementType.FUNCTION:
+                    writer.println("  }");
                     writer.println();
+                    break;
+                case ElementType.DOMAIN:
+                    if (closeDomain) {
+                        writer.println("    }");
+                        writer.println();                        
+                    }
+                    closeDomain = false;
                     break;
                 case ElementType.TOPIC:
                     writer.println("  }");
